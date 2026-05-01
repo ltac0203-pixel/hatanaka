@@ -1,0 +1,1092 @@
+openapi: 3.0.3
+
+info:
+  title: サブスクリプション管理 API
+  description: |
+    Fincode決済APIと統合したサブスクリプション管理WebアプリケーションのREST API。
+
+    ## 認証方法
+    - **cookieAuth**: Webセッション認証（デフォルト）。ブラウザからのアクセスに使用。
+    - **bearerAuth**: Sanctumトークン認証。ログイン時に `device_name` を指定すると30日有効なトークンが発行される。
+
+    ## レート制限
+    | エンドポイント | 制限 |
+    |---|---|
+    | POST /register | 5回/分 |
+    | POST /login | 5回/分 |
+    | POST /subscription | 3回/分 |
+    | DELETE /subscription | 5回/分 |
+    | POST /subscription/cards | 3回/分 |
+    | DELETE /subscription/cards/{card} | 5回/分 |
+    | POST /security/csp-reports | 30回/分 |
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: https://example.com/api
+    description: 本番環境
+  - url: http://localhost/api
+    description: ローカル開発環境
+
+tags:
+  - name: auth
+    description: 認証・ユーザー管理
+  - name: subscription
+    description: サブスクリプション管理
+  - name: plans
+    description: プラン一覧
+  - name: cards
+    description: 支払いカード管理
+  - name: security
+    description: セキュリティ関連
+
+paths:
+  /register:
+    post:
+      tags:
+        - auth
+      summary: ユーザー登録
+      description: 新規ユーザーを登録してセッション認証を開始する。
+      operationId: register
+      x-rateLimit: 5/分
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: 山田 太郎
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  example: taro@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: SecurePass1!
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: SecurePass1!
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /login:
+    post:
+      tags:
+        - auth
+      summary: ログイン
+      description: |
+        メールアドレスとパスワードで認証する。
+
+        `device_name` を指定した場合、セッションの代わりに30日有効なBearerトークンが返される（モバイルアプリ等向け）。
+      operationId: login
+      x-rateLimit: 5/分
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: taro@example.com
+                password:
+                  type: string
+                  format: password
+                  example: SecurePass1!
+                device_name:
+                  type: string
+                  maxLength: 255
+                  description: 指定するとBearerトークンが発行される（省略時はセッション認証）
+                  example: iPhone 15 Pro
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    description: device_name指定時のみ返却されるBearerトークン
+                    example: 1|abc123def456...
+        '422':
+          description: 認証失敗またはバリデーションエラー
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: メールアドレスまたはパスワードが正しくありません。
+                  - $ref: '#/components/schemas/ValidationErrorBody'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /logout:
+    post:
+      tags:
+        - auth
+      summary: ログアウト
+      description: セッションまたはBearerトークンを無効化する。
+      operationId: logout
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: ログアウトしました。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /session-status:
+    get:
+      tags:
+        - auth
+      summary: セッション確認
+      description: 現在のセッション・トークンの認証状態を確認する。
+      operationId: sessionStatus
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 認証状態
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authenticated:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /user:
+    get:
+      tags:
+        - auth
+      summary: ログインユーザー情報取得
+      description: 現在認証されているユーザーの情報を返す。
+      operationId: getUser
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /subscription:
+    get:
+      tags:
+        - subscription
+      summary: アクティブ契約取得
+      description: "ログインユーザーのアクティブなサブスクリプションを返す。契約がない場合は `data: null`。"
+      operationId: getSubscription
+      security:
+        - cookieAuth: ['subscription:read']
+        - bearerAuth: ['subscription:read']
+      responses:
+        '200':
+          description: アクティブ契約（nullの場合は未契約）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    nullable: true
+                    allOf:
+                      - $ref: '#/components/schemas/Subscription'
+              examples:
+                active:
+                  summary: 契約あり
+                  value:
+                    data:
+                      id: 1
+                      fincode_subscription_id: SUB_001
+                      status: ACTIVE
+                      start_date: '2026-03-01'
+                      stop_date: null
+                      next_charge_date: '2026-04-01'
+                      canceled_at: null
+                      ends_at: null
+                      plan:
+                        id: PLAN_001
+                        fincode_plan_id: PLAN_001
+                        name: スタンダードプラン
+                        description: 基本的な機能が使えるプラン
+                        amount: 1000
+                        interval: monthly
+                        interval_count: 1
+                        status: active
+                        features: null
+                        price_display: ¥1,000/月
+                        interval_label: 月
+                      card:
+                        id: 1
+                        brand: Visa
+                        last4: '4242'
+                        exp_month: '12'
+                        exp_year: '2027'
+                        is_default: true
+                        is_expired: false
+                        display_name: Visa ****4242
+                        expiry_display: 12/2027
+                none:
+                  summary: 未契約
+                  value:
+                    data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - subscription
+      summary: 契約作成
+      description: |
+        新しいサブスクリプションを作成する。
+
+        既にアクティブな契約がある場合は422エラー。`start_date` は今日以降の日付を指定する。
+      operationId: createSubscription
+      security:
+        - cookieAuth: ['subscription:write']
+        - bearerAuth: ['subscription:write']
+      x-rateLimit: 3/分
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fincode_plan_id
+                - card_id
+                - start_date
+              properties:
+                fincode_plan_id:
+                  type: string
+                  maxLength: 255
+                  pattern: '^[A-Za-z0-9_-]+$'
+                  description: Fincodeプランの識別子
+                  example: PLAN_001
+                card_id:
+                  type: integer
+                  description: 使用するカードのID（ユーザー所有のカードであること）
+                  example: 1
+                start_date:
+                  type: string
+                  format: date
+                  description: 契約開始日（今日以降）
+                  example: '2026-03-20'
+      responses:
+        '201':
+          description: 契約作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Subscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags:
+        - subscription
+      summary: 契約解約
+      description: アクティブなサブスクリプションを解約する。契約がない場合は404エラー。
+      operationId: cancelSubscription
+      security:
+        - cookieAuth: ['subscription:write']
+        - bearerAuth: ['subscription:write']
+      x-rateLimit: 5/分
+      responses:
+        '200':
+          description: 解約成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: サブスクリプションを解約しました。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/history:
+    get:
+      tags:
+        - subscription
+      summary: 決済履歴取得
+      description: ログインユーザーのサブスクリプション決済履歴をページネーション付きで返す。請求日の降順で取得される。
+      operationId: getSubscriptionHistory
+      security:
+        - cookieAuth: ['subscription:read']
+        - bearerAuth: ['subscription:read']
+      parameters:
+        - name: page
+          in: query
+          description: "ページ番号（デフォルト: 1）"
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: 決済履歴（ページネーション付き）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResultCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /subscription/plans:
+    get:
+      tags:
+        - plans
+      summary: プラン一覧取得
+      description: 利用可能なサブスクリプションプランの一覧を返す。
+      operationId: getPlans
+      security:
+        - cookieAuth: ['subscription:read']
+        - bearerAuth: ['subscription:read']
+      responses:
+        '200':
+          description: プラン一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /subscription/cards:
+    get:
+      tags:
+        - cards
+      summary: カード一覧取得
+      description: ログインユーザーに登録されている支払いカードの一覧を返す。
+      operationId: getCards
+      security:
+        - cookieAuth: ['card:read']
+        - bearerAuth: ['card:read']
+      responses:
+        '200':
+          description: カード一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Card'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - cards
+      summary: カード登録
+      description: |
+        新しい支払いカードを登録する。
+
+        フロントエンドでFincode.jsによりカード情報をトークン化し、そのトークンのみをサーバーに送信する。カード番号はサーバーに到達しない。
+      operationId: createCard
+      security:
+        - cookieAuth: ['card:write']
+        - bearerAuth: ['card:write']
+      x-rateLimit: 3/分
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  maxLength: 2048
+                  description: Fincode.jsが発行したカードトークン
+                  example: tok_abc123def456...
+                is_default:
+                  type: boolean
+                  description: デフォルトカードに設定するか（省略時はfalse）
+                  default: false
+                  example: true
+      responses:
+        '201':
+          description: カード登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Card'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/cards/{card}:
+    delete:
+      tags:
+        - cards
+      summary: カード削除
+      description: 指定したカードを削除する。他のユーザーのカードは削除できない（403）。
+      operationId: deleteCard
+      security:
+        - cookieAuth: ['card:write']
+        - bearerAuth: ['card:write']
+      x-rateLimit: 5/分
+      parameters:
+        - name: card
+          in: path
+          required: true
+          description: カードID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: カード削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: カードを削除しました。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /security/csp-reports:
+    post:
+      tags:
+        - security
+      summary: CSP違反報告
+      description: |
+        ブラウザからContent Security Policy違反を受信してログに記録する。
+
+        レガシー形式（`report-uri`）と構造化形式（`report-to`、`type: csp-violation`）の両方をサポートする。
+      operationId: cspReport
+      x-rateLimit: 30/分
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CspReportLegacy'
+                - $ref: '#/components/schemas/CspReportStructured'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/CspReportStructured'
+            examples:
+              legacy:
+                summary: レガシー形式（report-uri）
+                value:
+                  csp-report:
+                    document-uri: https://example.com/page
+                    blocked-uri: https://evil.com/script.js
+                    violated-directive: script-src
+                    effective-directive: script-src
+                    original-policy: "default-src 'self'"
+              structured:
+                summary: 構造化形式（report-to）
+                value:
+                  - type: csp-violation
+                    age: 10
+                    url: https://example.com/page
+                    body:
+                      documentURL: https://example.com/page
+                      blockedURL: https://evil.com/script.js
+                      violatedDirective: script-src-elem
+                      effectiveDirective: script-src-elem
+                      originalPolicy: "default-src 'self'"
+                      disposition: enforce
+          application/csp-report:
+            schema:
+              $ref: '#/components/schemas/CspReportLegacy'
+      responses:
+        '204':
+          description: 受信成功（レスポンスボディなし）
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+      description: |
+        Laravel Sanctumのパーソナルアクセストークン。
+        ログイン時に `device_name` を指定すると発行される（有効期限30日）。
+        スコープ: `subscription:read`, `subscription:write`, `card:read`, `card:write`
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+      description: LaravelセッションCookie（Webブラウザからのアクセスに使用）
+
+  schemas:
+    User:
+      type: object
+      description: ユーザー情報
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 山田 太郎
+        email:
+          type: string
+          format: email
+          example: taro@example.com
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-03-01T00:00:00+09:00'
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-03-01T00:00:00+09:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-03-20T12:00:00+09:00'
+
+    Plan:
+      type: object
+      description: サブスクリプションプラン情報
+      properties:
+        id:
+          type: string
+          description: FincodeプランID（fincode_plan_idと同値）
+          example: PLAN_001
+        fincode_plan_id:
+          type: string
+          description: FincodeプランID
+          example: PLAN_001
+        name:
+          type: string
+          description: プラン名
+          example: スタンダードプラン
+        description:
+          type: string
+          nullable: true
+          description: プランの説明
+          example: 基本的な機能が使えるプラン
+        amount:
+          type: integer
+          description: 金額（円）
+          example: 1000
+        interval:
+          type: string
+          enum:
+            - monthly
+            - yearly
+            - weekly
+            - daily
+          description: 課金間隔
+          example: monthly
+        interval_count:
+          type: integer
+          minimum: 1
+          description: "課金間隔の数（例: interval=monthly, interval_count=3 → 3ヶ月ごと）"
+          example: 1
+        status:
+          type: string
+          description: プランのステータス
+          example: active
+        features:
+          nullable: true
+          description: プランの特典・機能一覧（任意の形式）
+          example: null
+        price_display:
+          type: string
+          description: 表示用価格文字列
+          example: ¥1,000/月
+        interval_label:
+          type: string
+          description: 表示用課金間隔ラベル
+          example: 月
+
+    Card:
+      type: object
+      description: 支払いカード情報（フルカード番号は含まれない）
+      properties:
+        id:
+          type: integer
+          example: 1
+        brand:
+          type: string
+          description: カードブランド
+          example: Visa
+        last4:
+          type: string
+          description: カード番号下4桁
+          minLength: 4
+          maxLength: 4
+          example: '4242'
+        exp_month:
+          type: string
+          description: 有効期限（月）
+          example: '12'
+        exp_year:
+          type: string
+          description: 有効期限（年）
+          example: '2027'
+        is_default:
+          type: boolean
+          description: デフォルトカードかどうか
+          example: true
+        is_expired:
+          type: boolean
+          description: 有効期限切れかどうか
+          example: false
+        display_name:
+          type: string
+          description: 表示用カード名
+          example: Visa ****4242
+        expiry_display:
+          type: string
+          description: 表示用有効期限
+          example: 12/2027
+
+    Subscription:
+      type: object
+      description: サブスクリプション情報
+      properties:
+        id:
+          type: integer
+          example: 1
+        fincode_subscription_id:
+          type: string
+          description: FincodeサブスクリプションID
+          example: SUB_001
+        status:
+          type: string
+          description: サブスクリプションのステータス（ACTIVE, CANCELED, EXPIRED等）
+          example: ACTIVE
+        start_date:
+          type: string
+          format: date
+          nullable: true
+          description: 契約開始日
+          example: '2026-03-01'
+        stop_date:
+          type: string
+          format: date
+          nullable: true
+          description: 契約停止日
+          example: null
+        next_charge_date:
+          type: string
+          format: date
+          nullable: true
+          description: 次回請求日
+          example: '2026-04-01'
+        canceled_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 解約日時（ISO 8601）
+          example: null
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 契約終了日時（ISO 8601）
+          example: null
+        plan:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Plan'
+          description: 契約中のプラン情報
+        card:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Card'
+          description: 支払いに使用しているカード情報
+
+    SubscriptionResult:
+      type: object
+      description: サブスクリプション決済結果
+      properties:
+        id:
+          type: integer
+          example: 100
+        subscription_id:
+          type: integer
+          description: サブスクリプションID
+          example: 1
+        status:
+          type: string
+          description: 決済ステータス（SUCCESS, FAILED等）
+          example: SUCCESS
+        amount:
+          type: integer
+          nullable: true
+          description: 決済金額（円）
+          example: 1000
+        tax:
+          type: integer
+          nullable: true
+          description: 消費税額（円）
+          example: 100
+        charged_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 決済日時（ISO 8601）
+          example: '2026-03-01T09:00:00+09:00'
+        charged_at_date:
+          type: string
+          format: date
+          nullable: true
+          description: 決済日（YYYY-MM-DD）
+          example: '2026-03-01'
+        error_code:
+          type: string
+          nullable: true
+          description: エラーコード（失敗時）
+          example: null
+        error_message:
+          type: string
+          nullable: true
+          description: エラーメッセージ（失敗時）
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: レコード作成日時（ISO 8601）
+          example: '2026-03-01T09:00:00+09:00'
+
+    SubscriptionResultCollection:
+      type: object
+      description: 決済履歴（ページネーション付き）
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionResult'
+        links:
+          type: object
+          properties:
+            first:
+              type: string
+              format: uri
+              nullable: true
+              example: 'http://localhost/api/subscription/history?page=1'
+            last:
+              type: string
+              format: uri
+              nullable: true
+              example: 'http://localhost/api/subscription/history?page=5'
+            prev:
+              type: string
+              format: uri
+              nullable: true
+              example: null
+            next:
+              type: string
+              format: uri
+              nullable: true
+              example: 'http://localhost/api/subscription/history?page=2'
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+              example: 1
+            from:
+              type: integer
+              nullable: true
+              example: 1
+            last_page:
+              type: integer
+              example: 5
+            path:
+              type: string
+              format: uri
+              example: 'http://localhost/api/subscription/history'
+            per_page:
+              type: integer
+              example: 20
+            to:
+              type: integer
+              nullable: true
+              example: 20
+            total:
+              type: integer
+              example: 95
+
+    ValidationErrorBody:
+      type: object
+      description: バリデーションエラーの詳細
+      properties:
+        message:
+          type: string
+          example: 入力内容を確認してください。
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            email:
+              - このメールアドレスは既に登録されています。
+            password:
+              - パスワードは8文字以上必要です。
+
+    CspReportLegacy:
+      type: object
+      description: CSP違反報告（report-uri形式）
+      properties:
+        csp-report:
+          type: object
+          properties:
+            document-uri:
+              type: string
+              format: uri
+            blocked-uri:
+              type: string
+            violated-directive:
+              type: string
+            effective-directive:
+              type: string
+            original-policy:
+              type: string
+            referrer:
+              type: string
+            source-file:
+              type: string
+            line-number:
+              type: integer
+            column-number:
+              type: integer
+            disposition:
+              type: string
+              enum: [enforce, report]
+            status-code:
+              type: integer
+            script-sample:
+              type: string
+
+    CspReportStructured:
+      type: object
+      description: CSP違反報告（report-to形式）
+      properties:
+        type:
+          type: string
+          enum: [csp-violation]
+        age:
+          type: integer
+          description: レポート生成からの経過ミリ秒
+        url:
+          type: string
+          format: uri
+        body:
+          type: object
+          properties:
+            documentURL:
+              type: string
+              format: uri
+            blockedURL:
+              type: string
+            violatedDirective:
+              type: string
+            effectiveDirective:
+              type: string
+            originalPolicy:
+              type: string
+            referrer:
+              type: string
+            sourceFile:
+              type: string
+            lineNumber:
+              type: integer
+            columnNumber:
+              type: integer
+            disposition:
+              type: string
+              enum: [enforce, report]
+            statusCode:
+              type: integer
+
+  responses:
+    Unauthorized:
+      description: 認証が必要
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+
+    Forbidden:
+      description: 操作権限なし
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: This action is unauthorized.
+
+    NotFound:
+      description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: アクティブなサブスクリプションがありません。
+
+    ValidationError:
+      description: バリデーションエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorBody'
+
+    TooManyRequests:
+      description: レート制限超過
+      headers:
+        Retry-After:
+          description: 次のリクエストが可能になるまでの秒数
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Too Many Requests.
+
+    ServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: サーバーエラーが発生しました。

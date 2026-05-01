@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-white text-black;
+    }
+
+    *,
+    *::before,
+    *::after {
+        box-shadow: none !important;
+    }
+
+    .bg-gradient-to-r,
+    .bg-gradient-to-l,
+    .bg-gradient-to-t,
+    .bg-gradient-to-b,
+    .bg-gradient-to-tr,
+    .bg-gradient-to-tl,
+    .bg-gradient-to-br,
+    .bg-gradient-to-bl,
+    [style*="gradient"],
+    [class*="bg-gradient"] {
+        background-image: none !important;
+    }
+}
+
+@layer components {
+    .app-page-title {
+        @apply text-xl font-semibold uppercase leading-tight tracking-wide text-black;
+    }
+
+    .app-panel {
+        @apply border-2 border-black bg-white;
+    }
+
+    .app-panel-padded {
+        @apply border-2 border-black bg-white p-6;
+    }
+
+    .app-panel-section {
+        @apply border-2 border-black bg-white p-4 sm:p-8;
+    }
+
+    .app-form-control {
+        @apply border-2 border-gray-300 bg-white focus:border-black focus:ring-black;
+    }
+
+    .app-dark-cta-solid {
+        @apply cursor-pointer border-2 border-white bg-white text-black;
+    }
+
+    .app-dark-cta-ghost {
+        @apply cursor-pointer border-2 border-white/60 text-white;
+    }
+}
+
+#nprogress .bar,
+#nprogress .peg,
+#nprogress .spinner,
+#nprogress .spinner-icon {
+    box-shadow: none !important;
+    background-image: none !important;
+}

@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'feature/*'
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-pr:
+    if: startsWith(github.ref, 'refs/heads/feature/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if PR already exists
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          EXISTING=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          echo "exists=$([[ $EXISTING -gt 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Create Draft PR
+        if: steps.check-pr.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.check-pr.outputs.branch }}"
+          TITLE="${BRANCH#feature/}"
+          TITLE=$(echo "$TITLE" | sed 's/[-_]/ /g' | sed 's/.*/\L&/' | sed 's/^./\U&/')
+
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s" 2>/dev/null || echo "- Initial commit")
+
+          gh pr create \
+            --draft \
+            --title "$TITLE" \
+            --body "$(cat <<EOF
+          ## Summary
+          Auto-generated PR from \`$BRANCH\`.
+
+          ## Commits
+          $COMMITS
+
+          ## Checklist
+          - [ ] Tests pass
+          - [ ] Lint clean
+          - [ ] Build succeeds
+          EOF
+          )"
+
+  secrets-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect committed secret files and values
+        run: |
+          ERRORS=0
+
+          # Check for secret files that should never be committed
+          for pattern in ".env" "credentials.json" "service-account.json" ".env.production" ".env.local" "id_rsa" "id_ed25519"; do
+            matches=$(git ls-files "$pattern" 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "::error::Secret file detected: $matches"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          # Check for hardcoded secrets in tracked files
+          EXCLUDE="vendor/|node_modules/|\.git/|public/build/|storage/"
+          for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{20,}' 'sk_live_[a-zA-Z0-9]+' 'ghp_[a-zA-Z0-9]{36}' 'glpat-[a-zA-Z0-9\-]{20}' 'xoxb-[0-9]+-[0-9]+-[a-zA-Z0-9]+'; do
+            matches=$(git grep -lP "$pattern" -- . 2>/dev/null | grep -vE "$EXCLUDE" || true)
+            if [ -n "$matches" ]; then
+              echo "::error::Potential secret pattern found in: $matches"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS secret issue(s) detected."
+            exit 1
+          fi
+          echo "No secrets detected."
+
+  ci-checks:
+    needs: secrets-guard
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql
+          coverage: pcov
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node dependencies
+        run: npm ci --force
+
+      - name: Copy .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_DATABASE=.*/DB_DATABASE=testing/' .env
+          sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=password/' .env
+          sed -i 's/FINCODE_API_KEY=.*/FINCODE_API_KEY=ci_test_dummy_key/' .env
+          sed -i 's/FINCODE_PUBLIC_KEY=.*/FINCODE_PUBLIC_KEY=ci_test_dummy_public_key/' .env
+          sed -i 's/FINCODE_TENANT_SHOP_ID=.*/FINCODE_TENANT_SHOP_ID=ci_test_dummy_shop_id/' .env
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run Pint (lint)
+        run: ./vendor/bin/pint --test
+
+      - name: Run PHPUnit tests with coverage
+        run: php artisan test --coverage-clover=coverage.xml
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(php -r '
+            $xml = simplexml_load_file("coverage.xml");
+            $metrics = $xml->project->metrics;
+            $statements = (int)$metrics["statements"];
+            $covered = (int)$metrics["coveredstatements"];
+            if ($statements === 0) { echo "0"; exit; }
+            echo round($covered / $statements * 100, 2);
+          ')
+          echo "Coverage: ${COVERAGE}%"
+          THRESHOLD=50
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "::error::Coverage ${COVERAGE}% is below the minimum threshold of ${THRESHOLD}%"
+            exit 1
+          fi
