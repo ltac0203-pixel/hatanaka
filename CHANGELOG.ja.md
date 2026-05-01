@@ -21,7 +21,7 @@
   - `FincodeClient` HTTP クライアント（Bearer 認証・冪等キー・ログのセンシティブデータマスク）
   - Fincode の Customer / Card / Subscription CRUD をラップしたサービス層
   - フロントエンドでの Fincode JS トークン化（フルカード番号はサーバーに到達しない）
-- Laravel Breeze + Sanctum による認証: ユーザー登録・ログイン／ログアウト・パスワードリセット・メール認証
+- Laravel Breeze + Sanctum による認証: ユーザー登録・ログイン／ログアウト・メール認証
 - サブスクリプション機能: プラン一覧／詳細、カード登録・一覧・削除、契約・解約、決済履歴
 - `/api/*` 配下の REST API（OpenAPI 定義は `docs/api/openapi.yml`）
 - 状態変更操作の監査ログ（`audit_logs`、変更前後の値を保存）

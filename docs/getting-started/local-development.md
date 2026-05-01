@@ -154,7 +154,7 @@ MAIL_HOST=127.0.0.1
 MAIL_PORT=1025
 ```
 
-Open <http://localhost:8025> to inspect outgoing mail (registration, verification, password reset) in real time.
+Open <http://localhost:8025> to inspect outgoing mail (registration, email verification) in real time.
 
 ## 8. Manual checks via tinker
 

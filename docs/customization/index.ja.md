@@ -36,7 +36,7 @@
 
 ### 機能スコープ
 
-標準で提供されるのは：登録・ログイン・パスワードリセット・メール認証・プラン一覧・カード管理・契約／解約・決済履歴。削減・拡張の例：
+標準で提供されるのは：登録・ログイン・メール認証・プラン一覧・カード管理・契約／解約・決済履歴。削減・拡張の例：
 
 | 削減対象 | 想定作業 |
 | --- | --- |
@@ -83,7 +83,7 @@
 
 - `app/Http/Middleware/HandleInertiaRequests.php` — Inertia 共有データ。グローバルプロパティ追加時のみ。
 - `bootstrap/` — Laravel のブートストラップ。理由がない限り編集しない。
-- `database/migrations/0001_01_01_*` — フレームワーク標準テーブル（cache・jobs・password resets）。
+- `database/migrations/0001_01_01_*` — フレームワーク標準テーブル（users・cache・jobs）。
 - `vendor/`・`node_modules/`・`public/build/` — 生成物。コミットしない（`.gitignore` 済み）。
 
 ## 次に読むもの

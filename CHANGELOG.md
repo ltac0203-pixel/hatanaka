@@ -22,7 +22,7 @@ Initial public release as an open-source reference implementation.
   - `FincodeClient` HTTP client with Bearer auth, idempotency keys, and sensitive-data masking in logs.
   - Customer / Card / Subscription services wrapping Fincode CRUD operations.
   - Card tokenization on the frontend via Fincode JS — full PAN never reaches the application server.
-- Authentication via Laravel Breeze + Sanctum: registration, login/logout, password reset, email verification.
+- Authentication via Laravel Breeze + Sanctum: registration, login/logout, email verification.
 - Subscription features: plan listing/detail, card add/list/delete, subscribe/cancel, payment history.
 - REST API under `/api/*` with OpenAPI spec at `docs/api/openapi.yml`.
 - Audit log of state changes (`audit_logs`) with before/after values.

@@ -1,6 +1,6 @@
 English / [日本語](./README.ja.md)
 
-# Subscription Fincode App
+# hatanaka
 
 **Reference implementation of a subscription management web application integrated with the Fincode payment API.**
 
@@ -13,7 +13,6 @@ A sample project built with Laravel 12 + React 19 + Inertia.js + TypeScript that
 ### Authentication
 
 - User registration / login / logout
-- Password reset
 - Email verification
 
 ### Subscription management
@@ -207,4 +206,4 @@ Pull requests and issues are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) f
 
 [Apache License 2.0](./LICENSE)
 
-Copyright 2026 subscription-fincode-app contributors
+Copyright 2026 hatanaka contributors

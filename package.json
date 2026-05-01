@@ -1,10 +1,10 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "subscription-fincode-app",
+    "name": "hatanaka",
     "version": "0.1.0",
     "description": "Reference implementation of a subscription management web app integrated with the Fincode payment API. Built with Laravel 12, React 19, Inertia.js and TypeScript.",
     "license": "Apache-2.0",
-    "author": "subscription-fincode-app contributors <noreply@example.com>",
+    "author": "hatanaka contributors <noreply@example.com>",
     "repository": {
         "type": "git",
         "url": "https://github.com/ltac0203-pixel/hatanaka.git"

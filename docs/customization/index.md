@@ -36,7 +36,7 @@ You do **not** edit a `plans` table — there isn't one. See [`../architecture/d
 
 ### Feature surface
 
-Out of the box you get registration, login, password reset, email verification, plan listing, card management, subscribe / cancel, and payment history. Trim or extend:
+Out of the box you get registration, login, email verification, plan listing, card management, subscribe / cancel, and payment history. Trim or extend:
 
 | To remove | Likely cleanup |
 | --- | --- |
@@ -83,7 +83,7 @@ These are scaffolding that just works:
 
 - `app/Http/Middleware/HandleInertiaRequests.php` — shared Inertia data; only touch when adding global props.
 - `bootstrap/` — Laravel app bootstrapping; don't edit unless you know why.
-- `database/migrations/0001_01_01_*` — Laravel framework tables (cache, jobs, password resets).
+- `database/migrations/0001_01_01_*` — Laravel framework tables (users, cache, jobs).
 - `vendor/`, `node_modules/`, `public/build/` — generated. Do not commit (already in `.gitignore`).
 
 ## Where to read next
