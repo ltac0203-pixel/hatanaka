@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Fincode;
+
+class CardService
+{
+    public function __construct(private FincodeClient $client) {}
+
+    public function create(string $customerId, string $token, bool $defaultFlag = false): array
+    {
+        return $this->client->post("/v1/customers/{$customerId}/cards", [
+            'token' => $token,
+            'default_flag' => $defaultFlag ? '1' : '0',
+        ]);
+    }
+
+    public function getCard(string $customerId, string $cardId): array
+    {
+        return $this->client->get("/v1/customers/{$customerId}/cards/{$cardId}");
+    }
+
+    public function deleteCard(string $customerId, string $cardId): array
+    {
+        return $this->client->delete("/v1/customers/{$customerId}/cards/{$cardId}");
+    }
+}

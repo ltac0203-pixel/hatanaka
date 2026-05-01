@@ -1,0 +1,45 @@
+name: バグ報告 / Bug report
+description: 不具合の報告 / Report a bug
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要 / Summary
+      description: 何が起きたか / What happened
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 再現手順 / Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待される動作 / Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境 / Environment
+      description: PHPバージョン、Node.jsバージョン、DB、OSなど / PHP version, Node.js version, DB, OS, etc.
+      placeholder: |
+        - PHP: 8.3.x
+        - Node.js: v22.x
+        - DB: MySQL 8.0
+        - OS: macOS 14 / Windows 11 / Ubuntu 22.04
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ / Logs
+      description: 関連するエラーログ・スタックトレースなど（機密情報はマスクしてください）
+      render: shell
