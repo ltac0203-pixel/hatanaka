@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FincodeCard extends Model
@@ -35,12 +37,12 @@ class FincodeCard extends Model
         ];
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function fincodeCustomer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function fincodeCustomer(): BelongsTo
     {
         return $this->belongsTo(FincodeCustomer::class, 'fincode_customer_id', 'fincode_customer_id');
     }
@@ -63,7 +65,7 @@ class FincodeCard extends Model
     public function isExpired(): bool
     {
         $now = now();
-        $expiryDate = \Carbon\Carbon::create($this->exp_year, $this->exp_month)->endOfMonth();
+        $expiryDate = Carbon::create($this->exp_year, $this->exp_month)->endOfMonth();
 
         return $now->isAfter($expiryDate);
     }

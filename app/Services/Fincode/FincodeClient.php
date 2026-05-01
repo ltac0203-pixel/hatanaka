@@ -15,6 +15,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Psr\Http\Message\ResponseInterface;
 
 class FincodeClient
 {
@@ -255,7 +256,7 @@ class FincodeClient
         usleep($delayMs * 1000);
     }
 
-    private function parseRetryAfterHeader(\Psr\Http\Message\ResponseInterface $response): ?int
+    private function parseRetryAfterHeader(ResponseInterface $response): ?int
     {
         $retryAfter = $response->getHeaderLine('Retry-After');
 

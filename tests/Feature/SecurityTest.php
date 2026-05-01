@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\SubscriptionStatus;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Requests\StoreSubscriptionRequest;
+use App\Http\Resources\CardResource;
 use App\Models\FincodeCard;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -95,7 +98,7 @@ class SecurityTest extends TestCase
 
     public function test_store_subscription_request_only_allows_safe_fields(): void
     {
-        $request = new \App\Http\Requests\StoreSubscriptionRequest;
+        $request = new StoreSubscriptionRequest;
         $rules = $request->rules();
 
         $allowedFields = array_keys($rules);
@@ -118,7 +121,7 @@ class SecurityTest extends TestCase
         $card->fincode_card_id = 'card_123';
         $card->fincode_customer_id = 'cus_123';
 
-        $resource = new \App\Http\Resources\CardResource($card);
+        $resource = new CardResource($card);
         $array = $resource->resolve();
 
         $this->assertArrayNotHasKey('holder_name', $array);
@@ -184,11 +187,11 @@ class SecurityTest extends TestCase
     public function test_security_headers_middleware_is_registered_globally(): void
     {
         $app = $this->app;
-        $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
+        $kernel = $app->make(Kernel::class);
         $globalMiddleware = $kernel->getGlobalMiddleware();
 
         $this->assertContains(
-            \App\Http\Middleware\SecurityHeaders::class,
+            SecurityHeaders::class,
             $globalMiddleware,
             'SecurityHeaders middleware should be registered in the global middleware stack'
         );

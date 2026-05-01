@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Requests;
 
+use App\Http\Requests\StoreSubscriptionRequest;
 use App\Models\FincodeCard;
 use App\Models\FincodeCustomer;
 use App\Models\Subscription;
@@ -185,7 +186,7 @@ class StoreSubscriptionRequestTest extends TestCase
 
     public function test_get_validated_card_returns_correct_instance(): void
     {
-        $request = \App\Http\Requests\StoreSubscriptionRequest::create(
+        $request = StoreSubscriptionRequest::create(
             route('subscription.store'),
             'POST',
             [

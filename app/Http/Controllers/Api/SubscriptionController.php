@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Resources\SubscriptionResource;
 use App\Http\Resources\SubscriptionResultResource;
+use App\Models\Subscription;
 use App\Models\SubscriptionResult;
 use App\Services\Fincode\PlanService;
 use App\Services\SubscriptionManager;
@@ -71,7 +72,7 @@ class SubscriptionController extends Controller
         return SubscriptionResultResource::collection($results);
     }
 
-    private function createSubscriptionFromRequest(StoreSubscriptionRequest $request): \App\Models\Subscription
+    private function createSubscriptionFromRequest(StoreSubscriptionRequest $request): Subscription
     {
         $validated = $request->validated();
         $card = $request->getValidatedCard();
@@ -85,7 +86,7 @@ class SubscriptionController extends Controller
         );
     }
 
-    private function findActiveSubscription(Request $request): ?\App\Models\Subscription
+    private function findActiveSubscription(Request $request): ?Subscription
     {
         return $request->user()
             ->activeSubscription()

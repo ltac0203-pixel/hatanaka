@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FincodeCustomer extends Model
@@ -39,17 +41,17 @@ class FincodeCustomer extends Model
         ];
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function cards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function cards(): HasMany
     {
         return $this->hasMany(FincodeCard::class, 'fincode_customer_id', 'fincode_customer_id');
     }
 
-    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class, 'fincode_customer_id', 'fincode_customer_id');
     }

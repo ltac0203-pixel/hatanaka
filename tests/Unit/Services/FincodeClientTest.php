@@ -3,9 +3,13 @@
 namespace Tests\Unit\Services;
 
 use App\Exceptions\FincodeApiException;
+use App\Exceptions\FincodeRateLimitException;
+use App\Exceptions\FincodeServerException;
+use App\Exceptions\FincodeTimeoutException;
 use App\Services\Fincode\CircuitBreaker;
 use App\Services\Fincode\FincodeClient;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -293,7 +297,7 @@ class FincodeClientTest extends TestCase
             new RequestException('Too Many Requests', new Request('GET', '/v1/plans'), $errorResponse)
         );
 
-        $this->expectException(\App\Exceptions\FincodeRateLimitException::class);
+        $this->expectException(FincodeRateLimitException::class);
         $this->service->get('/v1/plans');
     }
 
@@ -304,17 +308,17 @@ class FincodeClientTest extends TestCase
             new RequestException('Server Error', new Request('GET', '/v1/plans'), $errorResponse)
         );
 
-        $this->expectException(\App\Exceptions\FincodeServerException::class);
+        $this->expectException(FincodeServerException::class);
         $this->service->get('/v1/plans');
     }
 
     public function test_request_throws_timeout_exception_on_connect_failure(): void
     {
         $this->mockHandler->append(
-            new \GuzzleHttp\Exception\ConnectException('Connection timed out', new Request('GET', '/v1/plans'))
+            new ConnectException('Connection timed out', new Request('GET', '/v1/plans'))
         );
 
-        $this->expectException(\App\Exceptions\FincodeTimeoutException::class);
+        $this->expectException(FincodeTimeoutException::class);
         $this->service->get('/v1/plans');
     }
 }

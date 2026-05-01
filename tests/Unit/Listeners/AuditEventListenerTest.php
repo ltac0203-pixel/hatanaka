@@ -11,6 +11,7 @@ use App\Models\FincodeCustomer;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\AuditLogger;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -186,7 +187,7 @@ class AuditEventListenerTest extends TestCase
 
         event(new CardDeleted($card, $user, $card->toArray(), []));
 
-        Queue::assertPushedOn('audit', \Illuminate\Events\CallQueuedListener::class, function ($job) {
+        Queue::assertPushedOn('audit', CallQueuedListener::class, function ($job) {
             return $job->class === AuditEventListener::class;
         });
     }

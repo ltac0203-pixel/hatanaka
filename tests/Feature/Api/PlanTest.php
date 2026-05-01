@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Exceptions\FincodeApiException;
 use App\Models\User;
 use App\Services\Fincode\PlanService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,7 +51,7 @@ class PlanTest extends TestCase
         $planService = Mockery::mock(PlanService::class);
         $planService->shouldReceive('listActivePlans')
             ->once()
-            ->andThrow(new \App\Exceptions\FincodeApiException('fincode error', 500));
+            ->andThrow(new FincodeApiException('fincode error', 500));
         $this->app->instance(PlanService::class, $planService);
 
         $response = $this->actingAs($user)->getJson('/api/subscription/plans');

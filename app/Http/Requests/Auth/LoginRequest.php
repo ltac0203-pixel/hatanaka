@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,7 +25,7 @@ class LoginRequest extends FormRequest
     /**
      * 認証前に最低限の入力欠損を弾いて無駄な照合を避ける。
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -37,7 +38,7 @@ class LoginRequest extends FormRequest
     /**
      * レート制限を守りつつ資格情報を照合し、不正試行を記録する。
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function authenticate(): void
     {
@@ -57,7 +58,7 @@ class LoginRequest extends FormRequest
     /**
      * ブルートフォース攻撃を抑えるため試行回数を制限する。
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function ensureIsNotRateLimited(): void
     {

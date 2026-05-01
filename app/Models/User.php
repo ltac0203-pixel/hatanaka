@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\SubscriptionStatus;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
@@ -46,28 +49,28 @@ class User extends Authenticatable
     /** 同一リクエスト内での重複クエリを防ぐキャッシュ。 */
     private ?bool $activeSubscriptionCache = null;
 
-    public function fincodeCustomer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function fincodeCustomer(): HasOne
     {
         return $this->hasOne(FincodeCustomer::class);
     }
 
-    public function fincodeCards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function fincodeCards(): HasMany
     {
         return $this->hasMany(FincodeCard::class);
     }
 
-    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
     }
 
-    public function activeSubscription(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function activeSubscription(): HasOne
     {
         return $this->hasOne(Subscription::class)
             ->where('status', SubscriptionStatus::Active->value);
     }
 
-    public function auditLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
     }

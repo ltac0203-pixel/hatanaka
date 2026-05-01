@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\SubscriptionStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscription extends Model
@@ -50,17 +53,17 @@ class Subscription extends Model
         ];
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function card(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function card(): BelongsTo
     {
         return $this->belongsTo(FincodeCard::class, 'fincode_card_id', 'fincode_card_id');
     }
 
-    public function results(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function results(): HasMany
     {
         return $this->hasMany(SubscriptionResult::class);
     }
@@ -83,7 +86,7 @@ class Subscription extends Model
         $this->save();
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query
             ->where('status', SubscriptionStatus::Active->value)

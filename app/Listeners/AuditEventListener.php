@@ -12,6 +12,7 @@ use App\Events\SubscriptionCreated;
 use App\Events\SubscriptionStatusChanged;
 use App\Services\AuditLogger;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
@@ -32,7 +33,7 @@ class AuditEventListener implements ShouldQueue
     /**
      * @return array<class-string, string>
      */
-    public function subscribe(\Illuminate\Events\Dispatcher $events): array
+    public function subscribe(Dispatcher $events): array
     {
         return [
             CardRegistered::class => 'handleCardRegistered',
