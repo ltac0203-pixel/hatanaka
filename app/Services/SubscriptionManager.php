@@ -70,6 +70,8 @@ class SubscriptionManager
             // 外部契約作成が失敗した場合にローカルだけ登録される状態を防ぐ。
             try {
                 $response = $this->subscriptionService->create([
+                    // Fincode のサブスク作成は決済種別が必須 (ES001023001)。本実装はカード決済のみを想定する。
+                    'pay_type' => 'Card',
                     'plan_id' => $planData['fincode_plan_id'],
                     'customer_id' => $customer->fincode_customer_id,
                     'card_id' => $card->fincode_card_id,
