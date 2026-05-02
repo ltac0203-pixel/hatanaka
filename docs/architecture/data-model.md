@@ -22,7 +22,6 @@ erDiagram
         bigint id PK
         string name
         string email UK
-        timestamp email_verified_at
         string password
     }
 

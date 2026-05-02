@@ -12,7 +12,6 @@ use App\Services\Fincode\FincodeClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -71,16 +70,6 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureAuthMail(): void
     {
-        VerifyEmail::toMailUsing(function (object $notifiable, string $url): MailMessage {
-            return (new MailMessage)
-                ->subject('メールアドレスの確認')
-                ->greeting('こんにちは')
-                ->line('以下のボタンからメールアドレスを確認してください。')
-                ->action('メールアドレスを確認する', $url)
-                ->line('心当たりがない場合は、このメールを破棄してください。')
-                ->salutation('hatanaka');
-        });
-
         ResetPassword::toMailUsing(function (object $notifiable, string $token): MailMessage {
             $url = url(route('password.reset', [
                 'token' => $token,
