@@ -51,7 +51,7 @@ class CardController extends Controller
         return $this->cardManager->create(
             $request->user(),
             $validated['token'],
-            $validated['is_default'] ?? false
+            $request->boolean('is_default')
         );
     }
 }

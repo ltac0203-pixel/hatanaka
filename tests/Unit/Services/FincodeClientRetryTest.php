@@ -232,4 +232,61 @@ class FincodeClientRetryTest extends TestCase
 
         $mockCb->shouldNotHaveReceived('recordFailure');
     }
+
+    public function test_excessive_retry_after_header_is_clipped_to_max_delay(): void
+    {
+        // 攻撃者または上流不具合が `Retry-After: 99999` を返した時、
+        // ワーカーが長時間スリープしないよう retry.max_delay_ms (5000ms) で打ち切られることを検証する。
+        config([
+            'fincode.retry.max_delay_ms' => 5000,
+        ]);
+        $this->history = [];
+        $this->mockHandler = new MockHandler;
+        $this->rebuildService();
+
+        $this->mockHandler->append(new Response(429, ['Retry-After' => '99999'], json_encode(['error' => 'Rate limit'])));
+        $this->mockHandler->append(new Response(429, ['Retry-After' => '99999'], json_encode(['error' => 'Rate limit'])));
+        $this->mockHandler->append(new Response(429, ['Retry-After' => '99999'], json_encode(['error' => 'Rate limit'])));
+
+        $start = microtime(true);
+
+        try {
+            $this->service->get('/v1/plans');
+            $this->fail('Expected FincodeRateLimitException');
+        } catch (FincodeRateLimitException $e) {
+            // expected
+        }
+
+        $elapsedMs = (microtime(true) - $start) * 1000;
+        // 上限 5s × 2 回のリトライ待機 = 10s 強で完了するはず。99秒ぶんは決して待たない。
+        $this->assertLessThan(15000, $elapsedMs, 'Retry-After must be clipped to retry.max_delay_ms');
+        $this->assertCount(3, $this->history);
+    }
+
+    public function test_logged_error_does_not_leak_response_body(): void
+    {
+        // Guzzle 例外メッセージは HTTP レスポンスボディを文字列化して含むため、
+        // ログ・例外メッセージにマスク対象外で漏洩しないことを検証する。
+        $this->history = [];
+        $this->mockHandler = new MockHandler;
+        $this->rebuildService();
+
+        $secretBody = json_encode([
+            'errors' => [[
+                'card_no' => '4111111111111111',
+                'holder_name' => 'YAMADA TARO',
+            ]],
+        ]);
+        $this->mockHandler->append(new Response(422, [], $secretBody));
+
+        try {
+            $this->service->get('/v1/customers/x/cards');
+            $this->fail('Expected FincodeApiException');
+        } catch (FincodeApiException $e) {
+            // 例外メッセージに HTTP ボディが含まれていないこと。
+            $this->assertStringNotContainsString('4111111111111111', $e->getMessage());
+            $this->assertStringNotContainsString('YAMADA TARO', $e->getMessage());
+            $this->assertStringContainsString('failed with status 422', $e->getMessage());
+        }
+    }
 }

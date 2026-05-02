@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Models\FincodeCard;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreSubscriptionRequest extends FormRequest
@@ -24,7 +25,13 @@ class StoreSubscriptionRequest extends FormRequest
     {
         return [
             'fincode_plan_id' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/'],
-            'card_id' => ['required', 'exists:fincode_cards,id'],
+            // exists を user_id でスコープし、他人の card_id 存在を validation メッセージから判別できないようにする (IDOR/列挙対策)。
+            'card_id' => [
+                'required',
+                Rule::exists('fincode_cards', 'id')
+                    ->where(fn ($query) => $query->where('user_id', $this->user()?->id)
+                        ->whereNull('deleted_at')),
+            ],
             'start_date' => ['required', 'date', 'after_or_equal:today'],
         ];
     }

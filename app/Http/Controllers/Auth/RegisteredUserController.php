@@ -39,6 +39,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        // Session Fixation 対策: ログイン直後に必ず ID を再生成し、
+        // 攻撃者が事前に固定したセッション ID を認証済みセッションへ昇格させない。
+        $request->session()->regenerate();
+
         return to_route('dashboard');
     }
 }

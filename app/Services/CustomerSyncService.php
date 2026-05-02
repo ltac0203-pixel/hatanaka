@@ -68,7 +68,8 @@ class CustomerSyncService
         } catch (FincodeApiException $e) {
             Log::error('Failed to create customer on Fincode', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'exception_class' => $e::class,
+                'status_code' => $e->getStatusCode(),
             ]);
             throw $e;
         }
@@ -126,7 +127,8 @@ class CustomerSyncService
         } catch (FincodeApiException $e) {
             Log::error('Failed to sync customer from Fincode', [
                 'fincode_customer_id' => $customer->fincode_customer_id,
-                'error' => $e->getMessage(),
+                'exception_class' => $e::class,
+                'status_code' => $e->getStatusCode(),
             ]);
             throw $e;
         }
