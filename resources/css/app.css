@@ -1,8 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views";
+@source "../../storage/framework/views";
+
+@theme {
+    --font-family-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --radius: 0;
+}
 
 @layer base {
     body {
