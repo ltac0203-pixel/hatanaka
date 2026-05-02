@@ -26,6 +26,8 @@ class SubscriptionService
     public function cancel(string $subscriptionId): array
     {
         return $this->client->put("/v1/subscriptions/{$subscriptionId}", [
+            // PUT /v1/subscriptions/{id} も決済種別が必須 (ES003023001 決済種別が指定されていません)。
+            'pay_type' => 'Card',
             'status' => FincodeApiStatus::CANCELED,
         ]);
     }
