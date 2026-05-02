@@ -25,10 +25,12 @@ class SubscriptionService
 
     public function cancel(string $subscriptionId): array
     {
-        return $this->client->put("/v1/subscriptions/{$subscriptionId}", [
-            // PUT /v1/subscriptions/{id} も決済種別が必須 (ES003023001 決済種別が指定されていません)。
+        // PUT /v1/subscriptions/{id} は課金開始済みのサブスクを変更不可 (ESC03194031) で、
+        // 同日に作成したサブスクをユーザが当日解約できなくなる。
+        // DELETE /v1/subscriptions/{id} は課金開始日と同日でも受理されるため、解約はこちらに寄せる。
+        // pay_type は query で必須 (ES002023001 決済種別が指定されていません)。
+        return $this->client->delete("/v1/subscriptions/{$subscriptionId}", [
             'pay_type' => 'Card',
-            'status' => FincodeApiStatus::CANCELED,
         ]);
     }
 

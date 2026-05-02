@@ -133,6 +133,19 @@ class FincodeClientTest extends TestCase
         $this->assertSame(['deleted' => true], $result);
     }
 
+    public function test_delete_passes_query_parameters(): void
+    {
+        // Fincode のサブスク削除のように pay_type を query で要求する API があるため、
+        // delete() がクエリ引数を URL に乗せる契約をリグレッションさせない。
+        $this->mockHandler->append(new Response(200, [], json_encode(['ok' => true])));
+
+        $this->service->delete('/v1/subscriptions/sub_1', ['pay_type' => 'Card']);
+
+        $request = $this->history[0]['request'];
+        $this->assertSame('DELETE', $request->getMethod());
+        $this->assertSame('pay_type=Card', $request->getUri()->getQuery());
+    }
+
     public function test_request_includes_bearer_auth(): void
     {
         $this->mockHandler->append(new Response(200, [], json_encode([])));
