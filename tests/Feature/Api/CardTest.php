@@ -79,7 +79,6 @@ class CardTest extends TestCase
         $user = User::factory()->create();
 
         $mockCard = new FincodeCard([
-            'id' => 1,
             'user_id' => $user->id,
             'fincode_customer_id' => 'cus_test',
             'fincode_card_id' => 'card_test',
@@ -95,13 +94,13 @@ class CardTest extends TestCase
         $cardManager = Mockery::mock(CardManager::class);
         $cardManager->shouldReceive('create')
             ->once()
-            ->with($user, 'tok_test_123', false)
+            ->with($user, 'tok_test_123_12345678', false)
             ->andReturn($mockCard);
 
         $this->app->instance(CardManager::class, $cardManager);
 
         $response = $this->actingAs($user)->postJson('/api/subscription/cards', [
-            'token' => 'tok_test_123',
+            'token' => 'tok_test_123_12345678',
         ]);
 
         $response->assertStatus(201)

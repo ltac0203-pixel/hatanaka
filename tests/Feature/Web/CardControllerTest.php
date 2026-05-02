@@ -203,7 +203,7 @@ class CardControllerTest extends TestCase
         $this->app->instance(CardManager::class, $cardManager);
 
         $response = $this->actingAs($user)->post('/cards', [
-            'token' => 'tok_test_abc123',
+            'token' => 'tok_test_abc123_12345',
             'is_default' => false,
         ]);
 
@@ -231,7 +231,7 @@ class CardControllerTest extends TestCase
         $this->app->instance(CardManager::class, $cardManager);
 
         $response = $this->actingAs($user)->post('/cards', [
-            'token' => 'tok_test_abc123',
+            'token' => 'tok_test_abc123_12345',
         ]);
 
         $response->assertRedirect(route('cards.create'));
@@ -241,7 +241,7 @@ class CardControllerTest extends TestCase
     public function test_store_requires_authentication(): void
     {
         $response = $this->post('/cards', [
-            'token' => 'tok_test_abc123',
+            'token' => 'tok_test_abc123_12345',
         ]);
 
         $response->assertRedirect('/login');

@@ -29,6 +29,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ALB/Cloudflare/Nginx 等の TLS 終端越しでも isSecure() を正しく判定し、
+        // HSTS をはじめとするセキュリティ機能が稼働するよう X-Forwarded-* を信頼する。
+        // 信頼するプロキシは TRUSTED_PROXIES (.env) で明示するのが望ましい (例: '10.0.0.0/8'、複数なら ',' 区切り)。
+        $trustedProxies = env('TRUSTED_PROXIES');
+        $middleware->trustProxies(
+            at: $trustedProxies === null ? '*' : $trustedProxies,
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
+
         $middleware->append(SecurityHeaders::class);
 
         $middleware->web(append: [

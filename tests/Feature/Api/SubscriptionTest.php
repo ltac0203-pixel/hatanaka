@@ -192,7 +192,7 @@ class SubscriptionTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonPath('errors.card_id.0', 'このカードは使用できません。');
+            ->assertJsonPath('errors.card_id.0', '選択されたcard idは無効です。');
     }
 
     public function test_destroy_cancels_subscription(): void

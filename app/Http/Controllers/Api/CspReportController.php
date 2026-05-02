@@ -12,8 +12,18 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CspReportController extends Controller
 {
+    /**
+     * 受信本文の最大サイズ。CSP レポートは数 KB 程度のはずで、これ以上は DoS 試行と見なし破棄する。
+     */
+    private const MAX_PAYLOAD_BYTES = 16384;
+
     public function __invoke(Request $request): Response
     {
+        // 本文サイズで早期に切り、ログ蓄積による DoS とディスク逼迫を抑える。
+        if (strlen($request->getContent()) > self::MAX_PAYLOAD_BYTES) {
+            return response()->noContent(Response::HTTP_PAYLOAD_TOO_LARGE);
+        }
+
         foreach ($this->extractReports($request) as $report) {
             Log::warning('Content Security Policy violation reported.', $report);
         }

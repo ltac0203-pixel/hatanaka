@@ -64,8 +64,11 @@ class FincodeCard extends Model
 
     public function isExpired(): bool
     {
-        $now = now();
-        $expiryDate = Carbon::create($this->exp_year, $this->exp_month)->endOfMonth();
+        // アプリのタイムゾーンに揃え、UTC との時差で月末跨ぎがブレる境界バグを防ぐ。
+        $appTimezone = (string) (config('app.timezone') ?: 'UTC');
+        $now = Carbon::now($appTimezone);
+        $expiryDate = Carbon::create($this->exp_year, $this->exp_month, 1, 0, 0, 0, $appTimezone)
+            ->endOfMonth();
 
         return $now->isAfter($expiryDate);
     }

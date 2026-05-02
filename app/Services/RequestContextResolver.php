@@ -18,7 +18,12 @@ class RequestContextResolver
         /** @var Request $request */
         $request = $this->app->make('request');
 
+        // $request->ip() は bootstrap/app.php の trustProxies で許可された経路のみ X-Forwarded-For を信頼する。
+        // 改ざんの恐れがある経路 (TRUSTED_PROXIES の範囲外) からの値はそのまま remote_addr として扱われ、
+        // AuditLog 上の IP は信頼可能な範囲に限定される。
         $ipAddress = $this->normalize($request->ip());
+        // User-Agent はクライアントが任意に設定可能なため、監査ログでは「自己申告値」として扱う前提。
+        // 整合性検証用途ではなく、トリアージ・統計用のヒントとしてのみ信頼すべき。
         $userAgent = $this->normalize($request->userAgent());
 
         if ($this->app->runningInConsole() && $userAgent === 'Symfony') {

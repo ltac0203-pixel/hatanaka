@@ -79,7 +79,8 @@ class SubscriptionManager
                 Log::error('Failed to create subscription on Fincode', [
                     'user_id' => $user->id,
                     'fincode_plan_id' => $planData['fincode_plan_id'],
-                    'error' => $e->getMessage(),
+                    'exception_class' => $e::class,
+                    'status_code' => $e->getStatusCode(),
                 ]);
                 throw $e;
             }
@@ -212,7 +213,8 @@ class SubscriptionManager
             } catch (FincodeApiException $e) {
                 Log::error('Failed to cancel subscription on Fincode', [
                     'subscription_id' => $subscription->id,
-                    'error' => $e->getMessage(),
+                    'exception_class' => $e::class,
+                    'status_code' => $e->getStatusCode(),
                 ]);
                 throw $e;
             }

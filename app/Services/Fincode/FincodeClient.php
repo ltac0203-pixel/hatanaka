@@ -235,12 +235,15 @@ class FincodeClient
 
     private function calculateDelay(int $attempt, ?int $retryAfterSeconds): int
     {
+        $maxDelay = $this->retryMaxDelayMs;
+
         if ($retryAfterSeconds !== null) {
-            return $retryAfterSeconds * 1000;
+            // サーバー側 Retry-After を信用しすぎるとワーカーが長時間スリープして DoS になるため、
+            // 設定された retry.max_delay_ms で上限クリップする。
+            return min($retryAfterSeconds * 1000, $maxDelay);
         }
 
         $baseDelay = $this->retryBaseDelayMs;
-        $maxDelay = $this->retryMaxDelayMs;
 
         $delay = $baseDelay * (2 ** ($attempt - 1));
 
@@ -264,8 +267,12 @@ class FincodeClient
             return null;
         }
 
+        // 上流からの Retry-After は秒数 / HTTP-date 表現のいずれもあり得るが、
+        // 上限を retryMaxDelayMs (秒換算) に強制クリップしてワーカー長期占有を防ぐ。
+        $maxSeconds = max(1, (int) ceil($this->retryMaxDelayMs / 1000));
+
         if (is_numeric($retryAfter)) {
-            return (int) $retryAfter;
+            return min(max(0, (int) $retryAfter), $maxSeconds);
         }
 
         $timestamp = strtotime($retryAfter);
@@ -274,7 +281,7 @@ class FincodeClient
             return null;
         }
 
-        return max(0, $timestamp - time());
+        return min(max(0, $timestamp - time()), $maxSeconds);
     }
 
     /**
@@ -282,8 +289,12 @@ class FincodeClient
      */
     private function classifyAndThrow(GuzzleException $e, int $statusCode, array $errorBody): never
     {
+        // Guzzle 例外メッセージは HTTP レスポンスボディを文字列で含むため、
+        // ログ・例外ハンドラ経由のセンシティブ情報漏洩を防ぐためクラス名と HTTP メタのみへ正規化する。
+        $sanitized = $this->sanitizeExceptionMessage($e, $statusCode);
+
         if ($e instanceof ConnectException) {
-            throw new FincodeTimeoutException($e->getMessage());
+            throw new FincodeTimeoutException($sanitized);
         }
 
         if ($statusCode === 429) {
@@ -292,23 +303,43 @@ class FincodeClient
                 $retryAfter = $this->parseRetryAfterHeader($e->getResponse());
             }
 
-            throw new FincodeRateLimitException($e->getMessage(), $statusCode, $errorBody, $retryAfter);
+            throw new FincodeRateLimitException($sanitized, $statusCode, $errorBody, $retryAfter);
         }
 
         if ($statusCode >= 500) {
-            throw new FincodeServerException($e->getMessage(), $statusCode, $errorBody);
+            throw new FincodeServerException($sanitized, $statusCode, $errorBody);
         }
 
-        throw new FincodeApiException($e->getMessage(), $statusCode, $errorBody);
+        throw new FincodeApiException($sanitized, $statusCode, $errorBody);
+    }
+
+    private function sanitizeExceptionMessage(\Throwable $e, int $statusCode): string
+    {
+        if ($e instanceof RequestException) {
+            $request = $e->getRequest();
+
+            return sprintf(
+                '%s %s %s failed with status %d',
+                $e::class,
+                $request->getMethod(),
+                (string) $request->getUri()->withUserInfo(''),
+                $statusCode
+            );
+        }
+
+        return $e::class;
     }
 
     private function logError(string $method, string $uri, int $statusCode, \Throwable $e, array $errorBody): void
     {
+        // Guzzle の RequestException::getMessage() は HTTP レスポンスボディを文字列化して埋め込むため、
+        // 配列ベースの maskSensitiveData をバイパスして PII/カード情報が平文で残る。
+        // クラス名のみ残し、本文は別途マスク済み error_body に集約する。
         Log::error('Fincode API Error', [
             'method' => $method,
             'uri' => $uri,
             'status_code' => $statusCode,
-            'error' => $e->getMessage(),
+            'exception_class' => $e::class,
             'error_body' => $this->maskSensitiveData($errorBody),
         ]);
     }

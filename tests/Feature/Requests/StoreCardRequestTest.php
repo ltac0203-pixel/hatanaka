@@ -21,7 +21,7 @@ class StoreCardRequestTest extends TestCase
     public function test_valid_token_and_is_default_passes(): void
     {
         $response = $this->actingAs($this->user)->post(route('cards.store'), [
-            'token' => 'tok_test_abc123',
+            'token' => 'tok_test_abcdefghijklmnopqr',
             'is_default' => true,
         ]);
 
@@ -50,7 +50,7 @@ class StoreCardRequestTest extends TestCase
     public function test_is_default_must_be_boolean(): void
     {
         $response = $this->actingAs($this->user)->post(route('cards.store'), [
-            'token' => 'tok_test_abc123',
+            'token' => 'tok_test_abcdefghijklmnopqr',
             'is_default' => 'not-a-boolean',
         ]);
 
@@ -60,9 +60,43 @@ class StoreCardRequestTest extends TestCase
     public function test_is_default_is_optional(): void
     {
         $response = $this->actingAs($this->user)->post(route('cards.store'), [
-            'token' => 'tok_test_abc123',
+            'token' => 'tok_test_abcdefghijklmnopqr',
         ]);
 
         $response->assertSessionDoesntHaveErrors(['token', 'is_default']);
+    }
+
+    public function test_token_with_invalid_characters_is_rejected(): void
+    {
+        $response = $this->actingAs($this->user)->post(route('cards.store'), [
+            'token' => 'invalid token with spaces!!!!',
+        ]);
+
+        $response->assertSessionHasErrors('token');
+    }
+
+    public function test_token_too_short_is_rejected(): void
+    {
+        $response = $this->actingAs($this->user)->post(route('cards.store'), [
+            'token' => 'short',
+        ]);
+
+        $response->assertSessionHasErrors('token');
+    }
+
+    public function test_replayed_token_is_rejected(): void
+    {
+        $token = 'tok_replay_'.str_repeat('a', 20);
+
+        $this->actingAs($this->user)->post(route('cards.store'), [
+            'token' => $token,
+        ]);
+
+        // 同じトークンの 2 回目送信は二重送信検出キャッシュにより拒否される。
+        $response = $this->actingAs($this->user)->post(route('cards.store'), [
+            'token' => $token,
+        ]);
+
+        $response->assertSessionHasErrors('token');
     }
 }

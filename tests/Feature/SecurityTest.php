@@ -163,7 +163,7 @@ class SecurityTest extends TestCase
         $this->assertEquals('DENY', $response->headers->get('X-Frame-Options'));
         $this->assertEquals('strict-origin-when-cross-origin', $response->headers->get('Referrer-Policy'));
         $this->assertNotNull($csp);
-        $this->assertStringContainsString('https://js.fincode.jp', $csp);
+        $this->assertMatchesRegularExpression('#https://js\.(test\.)?fincode\.jp#', $csp);
         $this->assertStringContainsString("style-src 'self' 'nonce-", $csp);
         $this->assertStringNotContainsString("'unsafe-inline'", $csp);
         $this->assertStringContainsString('report-uri /api/security/csp-reports', $csp);

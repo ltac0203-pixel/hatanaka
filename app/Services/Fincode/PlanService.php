@@ -49,17 +49,31 @@ class PlanService
      */
     public function findActivePlan(string $fincodePlanId): ?array
     {
-        $cached = Cache::remember(
-            "fincode.plans.{$fincodePlanId}",
-            300,
-            function () use ($fincodePlanId) {
-                $result = $this->fetchActivePlan($fincodePlanId);
+        // null は Cache::remember 上で「未保存」と区別不能のため、not-found は false センチネルで保存する。
+        // not-found 結果のキャッシュ TTL を短くして、Fincode 側で再有効化されたプランを早く再取得できるようにする。
+        $cacheKey = "fincode.plans.{$fincodePlanId}";
+        $cached = Cache::get($cacheKey);
 
-                return $result ?? false;
-            }
-        );
+        if ($cached === false) {
+            return null;
+        }
 
-        return $cached === false ? null : $cached;
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $result = $this->fetchActivePlan($fincodePlanId);
+
+        if ($result === null) {
+            // not-found は短時間 (60s) のみ negative cache し、誤って削除済みプランが永続的に隠れないようにする。
+            Cache::put($cacheKey, false, 60);
+
+            return null;
+        }
+
+        Cache::put($cacheKey, $result, 300);
+
+        return $result;
     }
 
     /**
