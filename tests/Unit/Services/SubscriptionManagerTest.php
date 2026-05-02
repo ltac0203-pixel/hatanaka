@@ -13,6 +13,7 @@ use App\Models\FincodeCustomer;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\CustomerSyncService;
+use App\Services\Fincode\FincodePayType;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use App\Services\RequestContextResolver;
 use App\Services\SubscriptionManager;
@@ -126,7 +127,7 @@ class SubscriptionManagerTest extends TestCase
             ->withArgs(function (array $payload, ?string $idempotencyKey) use ($expectedIdempotencyKey): bool {
                 return $payload === [
                     // Fincode のサブスク作成は決済種別必須 (ES001023001)。本実装はカード決済固定。
-                    'pay_type' => 'Card',
+                    'pay_type' => FincodePayType::CARD,
                     'plan_id' => 'pl_test',
                     'customer_id' => 'cus_sub_test',
                     'card_id' => 'card_sub_test',
