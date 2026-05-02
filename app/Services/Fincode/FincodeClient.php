@@ -112,17 +112,21 @@ class FincodeClient
     }
 
     /**
-     * 削除系 API も同じ例外処理へ寄せて扱えるようにする。
+     * 削除系 API も例外処理・冪等キーの契約を post()/put() と揃えて扱えるようにする。
      *
-     * Fincode のサブスクリプション削除のように pay_type を query で要求する API があるため、
-     * クエリ引数を受け取れる形に揃える。
+     * クエリを伴う DELETE エンドポイントでも query 引数で渡せる。冪等キー未指定時は
+     * UUID を自動生成し、getLastIdempotencyKey() から参照できる。
      *
      * @throws FincodeApiException
      */
-    public function delete(string $uri, array $query = []): array
+    public function delete(string $uri, array $query = [], ?string $idempotentKey = null): array
     {
+        $idempotentKey ??= (string) Str::uuid();
+        $this->lastIdempotencyKey = $idempotentKey;
+
         return $this->request('DELETE', $uri, [
             'query' => $query,
+            'headers' => ['Idempotency-Key' => $idempotentKey],
         ]);
     }
 
