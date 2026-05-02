@@ -36,16 +36,16 @@
 
 ### 機能スコープ
 
-標準で提供されるのは：登録・ログイン・メール認証・プラン一覧・カード管理・契約／解約・決済履歴。削減・拡張の例：
+標準で提供されるのは：登録・ログイン・プラン一覧・カード管理・契約／解約・決済履歴。削減・拡張の例：
 
 | 削減対象 | 想定作業 |
 | --- | --- |
-| メール認証 | ルートで `email_verified_at` ミドルウェアを外す。検証コントローラを削除。`User` モデルを更新 |
 | 公開登録 | `routes/api.php` の `register` と `routes/web.php` の登録ルートを制限 |
 | セルフ解約 | `DELETE /api/subscription` と対応 UI を削除 |
 
 | 拡張対象 | 着手地点 |
 | --- | --- |
+| メール認証 | `App\Models\User` に `MustVerifyEmail` を再実装し、保護したいルートに `verified` ミドルウェアを付与、verify-email 系コントローラを再導入する。Laravel Breeze の標準スキャフォールドが参考になる |
 | 1 ユーザー複数契約 | `subscriptions_active_user_id_unique` インデックスを外し（[data-model.ja.md](../architecture/data-model.ja.md)）、`SubscriptionManager.subscribe` を更新 |
 | クーポン・按分 | Fincode 側で実装し、`PlanService` でアプリに公開 |
 | Webhook 駆動の Dunning | [webhooks.ja.md](./webhooks.ja.md) を参照 |

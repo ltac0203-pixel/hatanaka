@@ -13,7 +13,6 @@ A sample project built with Laravel 12 + React 19 + Inertia.js + TypeScript that
 ### Authentication
 
 - User registration / login / logout
-- Email verification
 
 ### Subscription management
 
