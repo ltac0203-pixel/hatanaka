@@ -31,7 +31,7 @@ class SubscriptionController extends Controller
 
         return Inertia::render('Subscription/Index', [
             'subscription' => $subscription ? json_decode((new SubscriptionResource($subscription))->toJson(), true) : null,
-            'cards' => CardResource::collection($cards),
+            'cards' => CardResource::collection($cards)->resolve(),
         ]);
     }
 

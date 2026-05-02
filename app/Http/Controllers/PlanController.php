@@ -39,7 +39,7 @@ class PlanController extends Controller
 
         return Inertia::render('Plan/Show', [
             'plan' => $plan,
-            'cards' => CardResource::collection($cards),
+            'cards' => CardResource::collection($cards)->resolve(),
             'hasActiveSubscription' => $request->user()->hasActiveSubscription(),
             'minimumStartDate' => today()->toDateString(),
         ]);
