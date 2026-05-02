@@ -142,7 +142,7 @@ class ProfileTest extends TestCase
         $mockSubscriptionService = Mockery::mock(FincodeSubscriptionService::class);
         $mockSubscriptionService->shouldReceive('cancel')
             ->once()
-            ->with('sb_test_123')
+            ->with('sb_test_123', 'subscription:cancel:'.hash('sha256', 'sb_test_123'))
             ->andReturn([]);
         $this->app->instance(FincodeSubscriptionService::class, $mockSubscriptionService);
 
@@ -201,7 +201,7 @@ class ProfileTest extends TestCase
         $mockSubscriptionService = Mockery::mock(FincodeSubscriptionService::class);
         $mockSubscriptionService->shouldReceive('cancel')
             ->once()
-            ->with('sb_test_123')
+            ->with('sb_test_123', 'subscription:cancel:'.hash('sha256', 'sb_test_123'))
             ->andThrow(new FincodeApiException('Cancellation failed', 500));
         $this->app->instance(FincodeSubscriptionService::class, $mockSubscriptionService);
 

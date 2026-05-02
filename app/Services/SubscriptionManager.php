@@ -190,6 +190,11 @@ class SubscriptionManager
         ]));
     }
 
+    private function buildCancelIdempotencyKey(string $subscriptionId): string
+    {
+        return 'subscription:cancel:'.hash('sha256', $subscriptionId);
+    }
+
     private function parseFincodeDate(?string $value): ?string
     {
         if ($value === null) {
@@ -212,7 +217,10 @@ class SubscriptionManager
 
             // 外部課金が止まらないままローカルだけ解約される状態を防ぐ。
             try {
-                $this->subscriptionService->cancel($subscription->fincode_subscription_id);
+                $this->subscriptionService->cancel(
+                    $subscription->fincode_subscription_id,
+                    $this->buildCancelIdempotencyKey($subscription->fincode_subscription_id)
+                );
             } catch (FincodeApiException $e) {
                 Log::error('Failed to cancel subscription on Fincode', [
                     'subscription_id' => $subscription->id,

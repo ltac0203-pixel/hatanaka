@@ -23,7 +23,7 @@ class SubscriptionService
         return $this->client->put("/v1/subscriptions/{$subscriptionId}", $data);
     }
 
-    public function cancel(string $subscriptionId): array
+    public function cancel(string $subscriptionId, ?string $idempotencyKey = null): array
     {
         // PUT /v1/subscriptions/{id} は課金開始済みのサブスクを変更不可 (ESC03194031) で、
         // 同日に作成したサブスクをユーザが当日解約できなくなる。
@@ -31,7 +31,7 @@ class SubscriptionService
         // pay_type は query で必須 (ES002023001 決済種別が指定されていません)。
         return $this->client->delete("/v1/subscriptions/{$subscriptionId}", [
             'pay_type' => 'Card',
-        ]);
+        ], $idempotencyKey);
     }
 
     public function getResults(string $subscriptionId): array
