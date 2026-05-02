@@ -21,7 +21,11 @@ class SecurityHeaders
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        // 重要 API への不要な機能アクセスを明示的に拒否し、サブリソース経由の権限昇格を抑止する。
+        $response->headers->set(
+            'Permissions-Policy',
+            'camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), serial=(), interest-cohort=()'
+        );
         $response->headers->set('Content-Security-Policy', $this->buildCsp($nonce));
 
         if ($this->shouldAddHsts($request)) {
@@ -33,17 +37,29 @@ class SecurityHeaders
 
     private function buildCsp(string $nonce): string
     {
+        // 本番環境かどうかで Fincode のホストを切り替え、不要なエンドポイントを CSP から外す。
+        $isFincodeProduction = filter_var(env('FINCODE_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN);
+        $fincodeScriptHost = $isFincodeProduction ? 'https://js.fincode.jp' : 'https://js.test.fincode.jp';
+        $fincodeApiHost = $isFincodeProduction ? 'https://api.fincode.jp' : 'https://api.test.fincode.jp';
+
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-{$nonce}' https://js.test.fincode.jp https://js.fincode.jp",
+            "script-src 'self' 'nonce-{$nonce}' {$fincodeScriptHost}",
             "style-src 'self' 'nonce-{$nonce}' https://fonts.googleapis.com https://fonts.bunny.net",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net",
             "img-src 'self' data:",
-            "connect-src 'self' https://api.test.fincode.jp https://api.fincode.jp",
+            "connect-src 'self' {$fincodeApiHost}",
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",
+            // プラグイン/オブジェクト経由の任意コード実行を完全に塞ぐ。
+            "object-src 'none'",
         ];
+
+        // HTTPS でしかアクセスを許さないことを明示し、混在コンテンツの自動アップグレードを促す (HSTS と二重化)。
+        if (! app()->environment('local', 'testing')) {
+            $directives[] = 'upgrade-insecure-requests';
+        }
 
         if (config('security.csp.report_enabled')) {
             $reportUri = trim((string) config('security.csp.report_uri', ''));

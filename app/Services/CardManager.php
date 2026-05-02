@@ -48,16 +48,16 @@ class CardManager
             // Fincode 顧客が無いまま登録すると整合性が崩れるため、先に同期を保証する。
             $customer = $this->customerSyncService->ensureCustomerExists($user);
 
+            // デフォルトカードの切り替えと初回判定を競合状態に晒さないため、ユーザー行で排他ロックを取る。
+            // 同一ユーザーで並列に create() が走っても is_default=true が複数生成されない。
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
             // デフォルトカードを1枚に保ち、決済対象がぶれないようにする。
             if ($isDefault) {
                 $user->fincodeCards()->update(['is_default' => false]);
-            } elseif ($user->relationLoaded('fincodeCards')) {
-                if ($user->fincodeCards->isEmpty()) {
-                    // 初回登録カードは選択不能状態を避けるため自動で既定にする。
-                    $isDefault = true;
-                }
             } elseif (! $user->fincodeCards()->exists()) {
                 // 初回登録カードは選択不能状態を避けるため自動で既定にする。
+                // ロック取得後の確定 SQL に統一し、relationLoaded に依存した分岐を排除する。
                 $isDefault = true;
             }
 
@@ -71,7 +71,8 @@ class CardManager
             } catch (FincodeApiException $e) {
                 Log::error('Failed to create card on Fincode', [
                     'user_id' => $user->id,
-                    'error' => $e->getMessage(),
+                    'exception_class' => $e::class,
+                    'status_code' => $e->getStatusCode(),
                 ]);
                 throw $e;
             }
@@ -136,7 +137,8 @@ class CardManager
             } catch (FincodeApiException $e) {
                 Log::error('Failed to delete card on Fincode', [
                     'card_id' => $card->id,
-                    'error' => $e->getMessage(),
+                    'exception_class' => $e::class,
+                    'status_code' => $e->getStatusCode(),
                 ]);
                 throw $e;
             }

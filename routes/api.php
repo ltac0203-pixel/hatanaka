@@ -10,10 +10,12 @@ use App\Http\Controllers\Api\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('api.auth.register');
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('api.auth.login');
+// ログインは email+IP 複合鍵の throttle で辞書/分散攻撃を抑止する。
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:api-login')->name('api.auth.login');
 Route::post('/security/csp-reports', CspReportController::class)->middleware('throttle:30,1')->name('api.security.csp-reports');
 
-Route::middleware('auth:sanctum')->group(function () {
+// 認証済み API はグローバル throttle:api (60req/min/user) で読み取り系の濫用を防ぐ。
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/session-status', [AuthController::class, 'sessionStatus'])->name('api.auth.session-status');
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
     Route::get('/user', [AuthController::class, 'user'])->name('api.auth.user');
