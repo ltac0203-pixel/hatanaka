@@ -14,12 +14,16 @@ export function normalizeTokenPayload(
         "expireMonth",
         "exp_month",
         "expMonth",
+        // Fincode UI Components の getFormData() が返すキー
+        "month",
     ]);
     let expireYear = findStringValue(formData, [
         "expire_year",
         "expireYear",
         "exp_year",
         "expYear",
+        // Fincode UI Components の getFormData() が返すキー
+        "year",
     ]);
 
     if (!expireMonth || !expireYear) {
@@ -53,10 +57,10 @@ export function normalizeTokenPayload(
         return null;
     }
 
+    // Fincode tokens API は expire を YYMM (年下2桁 + 月) 形式の 4 桁文字列で要求する。
     const payload: FincodeTokenCardPayload = {
         card_no: cardNo,
-        expire_month: expireMonth,
-        expire_year: expireYear,
+        expire: `${expireYear}${expireMonth}`,
     };
 
     const holderName = findStringValue(formData, ["holder_name", "holderName"]);
@@ -69,6 +73,8 @@ export function normalizeTokenPayload(
         "securityCode",
         "cvc",
         "cvv",
+        // Fincode UI Components の getFormData() が返すキー (大文字)
+        "CVC",
     ])?.replace(/\D/g, "");
     if (securityCode) {
         payload.security_code = securityCode;

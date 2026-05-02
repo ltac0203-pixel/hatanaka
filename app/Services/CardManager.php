@@ -77,6 +77,10 @@ class CardManager
                 throw $e;
             }
 
+            // Fincode の card レスポンスは expire を YYMM (年下2桁 + 月) 形式の 4 桁文字列で返す。
+            // 後続の請求や画面表示の都合で年/月に分けて保存する。
+            [$expMonth, $expYear] = $this->splitExpire((string) ($response['expire'] ?? ''));
+
             // 以後の決済や画面表示で参照できるようローカルへ反映する。
             $card = FincodeCard::create([
                 'user_id' => $user->id,
@@ -84,8 +88,8 @@ class CardManager
                 'fincode_card_id' => $response['id'],
                 'brand' => $response['brand'],
                 'last4' => substr($response['card_no'], -4),
-                'exp_month' => (int) $response['expire_month'],
-                'exp_year' => (int) $response['expire_year'],
+                'exp_month' => $expMonth,
+                'exp_year' => $expYear,
                 'holder_name' => $response['holder_name'] ?? null,
                 'is_default' => $isDefault,
             ]);
@@ -105,6 +109,24 @@ class CardManager
 
             return $card;
         });
+    }
+
+    /**
+     * Fincode が返す expire (YYMM 4 桁) を [月, 年(4桁)] に分解する。
+     *
+     * @return array{0:int,1:int}
+     */
+    private function splitExpire(string $expire): array
+    {
+        $digits = preg_replace('/\D/', '', $expire) ?? '';
+        if (strlen($digits) !== 4) {
+            return [0, 0];
+        }
+
+        $year = 2000 + (int) substr($digits, 0, 2);
+        $month = (int) substr($digits, 2, 2);
+
+        return [$month, $year];
     }
 
     public function delete(FincodeCard $card): void

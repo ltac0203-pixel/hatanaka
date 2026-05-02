@@ -19,6 +19,11 @@ return [
     'tenant_shop_id' => env('FINCODE_TENANT_SHOP_ID', env('FINCODE_SHOP_ID')),
     'timeout' => env('FINCODE_TIMEOUT', 30),
     'connect_timeout' => env('FINCODE_CONNECT_TIMEOUT', 10),
+
+    // TLS 検証用 CA バンドル。未設定 (true) の場合 PHP/cURL のシステムデフォルトを使う。
+    // Windows のように OS に CA バンドルが未配備の環境では、明示的にパスを指定する必要がある。
+    'ca_bundle' => env('FINCODE_CA_BUNDLE', storage_path('certs/cacert.pem')),
+
     'log_requests' => env('FINCODE_LOG_REQUESTS', false),
     'log_responses' => env('FINCODE_LOG_RESPONSES', false),
 

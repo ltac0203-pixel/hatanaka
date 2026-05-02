@@ -125,10 +125,13 @@ class SubscriptionManagerTest extends TestCase
             ->once()
             ->withArgs(function (array $payload, ?string $idempotencyKey) use ($expectedIdempotencyKey): bool {
                 return $payload === [
+                    // Fincode のサブスク作成は決済種別必須 (ES001023001)。本実装はカード決済固定。
+                    'pay_type' => 'Card',
                     'plan_id' => 'pl_test',
                     'customer_id' => 'cus_sub_test',
                     'card_id' => 'card_sub_test',
-                    'start_date' => '2026-03-01',
+                    // Fincode は Y/m/d 形式を要求する (ESC01196008)。
+                    'start_date' => '2026/03/01',
                 ] && $idempotencyKey === $expectedIdempotencyKey;
             })
             ->andReturn($this->fincodeSubscriptionResponse());

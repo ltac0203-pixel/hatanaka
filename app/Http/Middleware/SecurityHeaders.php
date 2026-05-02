@@ -42,13 +42,36 @@ class SecurityHeaders
         $fincodeScriptHost = $isFincodeProduction ? 'https://js.fincode.jp' : 'https://js.test.fincode.jp';
         $fincodeApiHost = $isFincodeProduction ? 'https://api.fincode.jp' : 'https://api.test.fincode.jp';
 
+        // local 環境のみ Vite dev サーバー (127.0.0.1:5180) を許可する。
+        // testing / production では nonce ベースの厳格な CSP を維持する。
+        // testing も厳格にしておくのは tests/Feature/SecurityTest.php がそれを検証するため。
+        $isLocalDev = app()->environment('local');
+        $viteDevHost = (string) env('VITE_DEV_SERVER_HOST', '127.0.0.1:5180');
+
+        $scriptSrc = $isLocalDev
+            ? "script-src 'self' 'nonce-{$nonce}' http://{$viteDevHost} {$fincodeScriptHost}"
+            : "script-src 'self' 'nonce-{$nonce}' {$fincodeScriptHost}";
+
+        // Vite dev は HMR で <style> を動的注入し nonce を付けないため 'unsafe-inline' が必要。
+        // この緩和は local のみ。testing / production は厳格な nonce ベースを維持する。
+        $styleSrc = $isLocalDev
+            ? "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net"
+            : "style-src 'self' 'nonce-{$nonce}' https://fonts.googleapis.com https://fonts.bunny.net";
+
+        $connectSrc = $isLocalDev
+            ? "connect-src 'self' {$fincodeApiHost} http://{$viteDevHost} ws://{$viteDevHost}"
+            : "connect-src 'self' {$fincodeApiHost}";
+
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-{$nonce}' {$fincodeScriptHost}",
-            "style-src 'self' 'nonce-{$nonce}' https://fonts.googleapis.com https://fonts.bunny.net",
+            $scriptSrc,
+            $styleSrc,
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net",
             "img-src 'self' data:",
-            "connect-src 'self' {$fincodeApiHost}",
+            $connectSrc,
+            // Fincode JS SDK はカード入力フォームを iframe で挿入する。
+            // frame-src 未指定だと default-src 'self' にフォールバックしブロックされるため明示する。
+            "frame-src {$fincodeScriptHost}",
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -57,7 +80,7 @@ class SecurityHeaders
         ];
 
         // HTTPS でしかアクセスを許さないことを明示し、混在コンテンツの自動アップグレードを促す (HSTS と二重化)。
-        if (! app()->environment('local', 'testing')) {
+        if (! $isLocalDev) {
             $directives[] = 'upgrade-insecure-requests';
         }
 
