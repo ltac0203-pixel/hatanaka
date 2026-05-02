@@ -62,8 +62,8 @@ declare global {
 
     interface FincodeTokenCardPayload {
         card_no: string;
-        expire_month: string;
-        expire_year: string;
+        // Fincode tokens API は expire を YYMM (4 桁) で要求する。
+        expire: string;
         holder_name?: string;
         security_code?: string;
     }

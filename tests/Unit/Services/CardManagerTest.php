@@ -65,8 +65,8 @@ class CardManagerTest extends TestCase
             'id' => 'card_fincode_123',
             'brand' => 'Visa',
             'card_no' => '************4242',
-            'expire_month' => '12',
-            'expire_year' => '2030',
+            // Fincode の card レスポンスは expire を YYMM (4桁) で返す。
+            'expire' => '3012',
             'holder_name' => 'TEST USER',
         ], $overrides);
     }
@@ -256,8 +256,7 @@ class CardManagerTest extends TestCase
                 'id' => 'card_saved',
                 'brand' => 'JCB',
                 'card_no' => '************1234',
-                'expire_month' => '03',
-                'expire_year' => '2029',
+                'expire' => '2903',
                 'holder_name' => 'SAVE TEST',
             ]));
 
