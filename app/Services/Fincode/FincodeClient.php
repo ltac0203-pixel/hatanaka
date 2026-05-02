@@ -114,11 +114,16 @@ class FincodeClient
     /**
      * 削除系 API も同じ例外処理へ寄せて扱えるようにする。
      *
+     * Fincode のサブスクリプション削除のように pay_type を query で要求する API があるため、
+     * クエリ引数を受け取れる形に揃える。
+     *
      * @throws FincodeApiException
      */
-    public function delete(string $uri): array
+    public function delete(string $uri, array $query = []): array
     {
-        return $this->request('DELETE', $uri);
+        return $this->request('DELETE', $uri, [
+            'query' => $query,
+        ]);
     }
 
     protected function request(string $method, string $uri, array $options = []): array
