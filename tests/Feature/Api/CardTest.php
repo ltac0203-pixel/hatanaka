@@ -94,13 +94,13 @@ class CardTest extends TestCase
         $cardManager = Mockery::mock(CardManager::class);
         $cardManager->shouldReceive('create')
             ->once()
-            ->with($user, 'tok_test_123', false)
+            ->with($user, 'tok_test_123_12345678', false)
             ->andReturn($mockCard);
 
         $this->app->instance(CardManager::class, $cardManager);
 
         $response = $this->actingAs($user)->postJson('/api/subscription/cards', [
-            'token' => 'tok_test_123',
+            'token' => 'tok_test_123_12345678',
         ]);
 
         $response->assertStatus(201)
