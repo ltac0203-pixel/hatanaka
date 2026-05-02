@@ -75,7 +75,8 @@ class SubscriptionManager
                     'plan_id' => $planData['fincode_plan_id'],
                     'customer_id' => $customer->fincode_customer_id,
                     'card_id' => $card->fincode_card_id,
-                    'start_date' => $startDate,
+                    // Fincode は課金開始日を Y/m/d 形式で要求する (ESC01196008 課金開始日の書式が正しくありません)。
+                    'start_date' => Carbon::parse($startDate)->format('Y/m/d'),
                 ], $idempotencyKey);
             } catch (FincodeApiException $e) {
                 Log::error('Failed to create subscription on Fincode', [
