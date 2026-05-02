@@ -79,7 +79,6 @@ class CardTest extends TestCase
         $user = User::factory()->create();
 
         $mockCard = new FincodeCard([
-            'id' => 1,
             'user_id' => $user->id,
             'fincode_customer_id' => 'cus_test',
             'fincode_card_id' => 'card_test',
