@@ -49,7 +49,30 @@ In Fincode test mode you can use the following test card numbers.
 - Any future expiry date and any 3–4 digit CVC will work.
 - See the [Fincode official documentation](https://docs.fincode.jp/) for details.
 
-## 5. Webhooks (optional)
+## 5. SDK SRI hash (optional, recommended for production)
+
+You can pin a [Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) hash for the Fincode JavaScript SDK (`https://js.fincode.jp/v1/fincode.js` or `https://js.test.fincode.jp/v1/fincode.js`) so the browser verifies that the CDN-served SDK has not been tampered with. Recommended for production deployments.
+
+Add the following to your `.env` (this is opt-in: when unset, SRI verification is skipped):
+
+```env
+FINCODE_SDK_SRI_HASH=sha384-...
+```
+
+Generate the hash:
+
+```bash
+curl -sS https://js.fincode.jp/v1/fincode.js | openssl dgst -sha384 -binary | openssl base64 -A
+# Prefix the result with "sha384-" before adding it to .env
+```
+
+> **Important**: When Fincode updates the SDK at `/v1/fincode.js`, the hash changes and a stale SRI value will cause the browser to refuse loading the SDK, breaking the card registration form. Regenerate the hash whenever Fincode announces an SDK update or as part of regular maintenance.
+>
+> Reference values (**captured 2026-05-02 — may already be stale**):
+> - test (`js.test.fincode.jp`): `sha384-anKenRdVmxfWGQwMfGW0f89YPugW4vxILr8sD1p8B0kc6DpDq5ejh9mMW1SJ+DB9`
+> - prod (`js.fincode.jp`): `sha384-arHsCAILnADNzHPyiPbVMEacST3DQHn/zkLICr5qJFVskPazlrQ/tGON2K71pJq9`
+
+## 6. Webhooks (optional)
 
 If you want to receive recurring-billing results asynchronously, configure a webhook endpoint in the Fincode console. This reference implementation does not ship with a webhook handler — add one if you need it.
 
