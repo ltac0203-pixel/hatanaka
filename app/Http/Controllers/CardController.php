@@ -46,7 +46,11 @@ class CardController extends Controller
     public function store(StoreCardRequest $request): RedirectResponse
     {
         try {
-            $this->createCardFromRequest($request);
+            $this->cardManager->create(
+                $request->user(),
+                $request->validated('token'),
+                $request->boolean('is_default')
+            );
         } catch (FincodeApiException) {
             return redirect()->route('cards.create')
                 ->withErrors([
@@ -78,16 +82,5 @@ class CardController extends Controller
 
         return redirect()->route('subscription.index')
             ->with('success', 'カードを削除しました。');
-    }
-
-    private function createCardFromRequest(StoreCardRequest $request): FincodeCard
-    {
-        $validated = $request->validated();
-
-        return $this->cardManager->create(
-            $request->user(),
-            $validated['token'],
-            $request->boolean('is_default')
-        );
     }
 }

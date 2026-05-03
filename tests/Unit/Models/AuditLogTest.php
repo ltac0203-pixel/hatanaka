@@ -33,8 +33,8 @@ class AuditLogTest extends TestCase
 
     public function test_user_relationship(): void
     {
-        $auditLog = AuditLog::create([
-            'user_id' => $this->user->id,
+        // user_id は $fillable から外しているため、直接代入してから save() する。
+        $auditLog = new AuditLog([
             'event' => 'card.created',
             'auditable_type' => User::class,
             'auditable_id' => $this->user->id,
@@ -43,6 +43,8 @@ class AuditLogTest extends TestCase
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
         ]);
+        $auditLog->user_id = $this->user->id;
+        $auditLog->save();
 
         $user = $auditLog->user()->firstOrFail();
 
@@ -71,8 +73,7 @@ class AuditLogTest extends TestCase
             'is_default' => true,
         ]);
 
-        $auditLog = AuditLog::create([
-            'user_id' => $this->user->id,
+        $auditLog = new AuditLog([
             'event' => 'card.created',
             'auditable_type' => FincodeCard::class,
             'auditable_id' => $card->id,
@@ -81,6 +82,8 @@ class AuditLogTest extends TestCase
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
         ]);
+        $auditLog->user_id = $this->user->id;
+        $auditLog->save();
 
         $auditable = $auditLog->auditable()->firstOrFail();
 
@@ -94,8 +97,7 @@ class AuditLogTest extends TestCase
         $newValues = ['status' => 'canceled'];
         $metadata = ['reason' => 'user_request', 'ip' => '192.168.1.1'];
 
-        $auditLog = AuditLog::create([
-            'user_id' => $this->user->id,
+        $auditLog = new AuditLog([
             'event' => 'subscription.canceled',
             'auditable_type' => User::class,
             'auditable_id' => $this->user->id,
@@ -105,6 +107,8 @@ class AuditLogTest extends TestCase
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
         ]);
+        $auditLog->user_id = $this->user->id;
+        $auditLog->save();
 
         $auditLog->refresh();
 

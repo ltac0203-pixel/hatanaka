@@ -36,16 +36,16 @@ You do **not** edit a `plans` table — there isn't one. See [`../architecture/d
 
 ### Feature surface
 
-Out of the box you get registration, login, email verification, plan listing, card management, subscribe / cancel, and payment history. Trim or extend:
+Out of the box you get registration, login, plan listing, card management, subscribe / cancel, and payment history. Trim or extend:
 
 | To remove | Likely cleanup |
 | --- | --- |
-| Email verification | Remove `email_verified_at` middleware in routes; drop the verification controllers. Update `User` model. |
 | Public registration | Restrict `routes/api.php` `register` and `routes/web.php` registration routes. |
 | Self-service cancellation | Remove `DELETE /api/subscription` and the corresponding UI. |
 
 | To add | Where to start |
 | --- | --- |
+| Email verification | Re-introduce `MustVerifyEmail` on `App\Models\User`, the `verified` middleware on protected routes, and the verify-email controllers. Use Laravel Breeze's scaffolding as a reference. |
 | Multiple subscriptions per user | Drop the `subscriptions_active_user_id_unique` index ([data-model.md](../architecture/data-model.md)) and update `SubscriptionManager.subscribe`. |
 | Coupons / proration | Implement at the Fincode side; surface in your `PlanService`. |
 | Webhook-driven dunning | See [webhooks.md](./webhooks.md). |

@@ -11,6 +11,10 @@ While the project is on `0.x`, minor versions may include breaking changes. See 
 
 ## [Unreleased]
 
+### Removed
+
+- Email verification: dropped the `MustVerifyEmail` interface, `verified` middleware on web routes, `/verify-email/*` endpoints, the `VerifyEmail` page, and the `users.email_verified_at` column. The reference implementation now focuses on the payment flow only — registered users land on `/dashboard` directly. See [docs/customization/index.md](./docs/customization/index.md) for re-introduction guidance.
+
 ## [0.1.0] - 2026-05-01
 
 Initial public release as an open-source reference implementation.

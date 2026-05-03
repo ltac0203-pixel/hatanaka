@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\SubscriptionStatus;
 use App\Events\SubscriptionCanceled;
 use App\Events\SubscriptionCreated;
 use App\Events\SubscriptionStatusChanged;
@@ -14,6 +15,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\CustomerSyncService;
 use App\Services\Fincode\FincodePayType;
+use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use App\Services\RequestContextResolver;
 use App\Services\SubscriptionManager;
@@ -43,7 +45,8 @@ class SubscriptionManagerTest extends TestCase
         $this->manager = new SubscriptionManager(
             $this->mockSubscriptionService,
             $this->mockCustomerSyncService,
-            new RequestContextResolver($this->app)
+            new RequestContextResolver($this->app),
+            Mockery::mock(PlanService::class)
         );
     }
 
@@ -412,7 +415,7 @@ class SubscriptionManagerTest extends TestCase
         $this->manager->cancel($subscription);
 
         $subscription->refresh();
-        $this->assertSame('canceled', $subscription->status);
+        $this->assertSame(SubscriptionStatus::Canceled, $subscription->status);
         $this->assertNotNull($subscription->canceled_at);
         $this->assertNotNull($subscription->stop_date);
     }
@@ -535,6 +538,6 @@ class SubscriptionManagerTest extends TestCase
 
         $subscription = $this->manager->create($user, $planData, $card, '2026-03-01');
 
-        $this->assertSame('incomplete', $subscription->status);
+        $this->assertSame(SubscriptionStatus::Incomplete, $subscription->status);
     }
 }

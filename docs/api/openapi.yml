@@ -649,11 +649,6 @@ components:
           type: string
           format: email
           example: taro@example.com
-        email_verified_at:
-          type: string
-          format: date-time
-          nullable: true
-          example: '2026-03-01T00:00:00+09:00'
         created_at:
           type: string
           format: date-time

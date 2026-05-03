@@ -22,18 +22,17 @@ php artisan test --testsuite=Feature
 
 ## テスト DB
 
-`phpunit.xml` は `DB_CONNECTION=mysql` と charset/collation を設定しますが、**`DB_DATABASE` は設定しません**。`.env.testing` に置いてください：
+`phpunit.xml` が `DB_CONNECTION=mysql` と `DB_DATABASE=hatanaka_testing`（および charset/collation）を固定するため、テストスイートは `.env` に関わらず常に専用の `hatanaka_testing` を見ます。接続資格情報のみ `.env.testing` から読みます：
 
 ```ini
 # .env.testing
 APP_ENV=testing
 DB_CONNECTION=mysql
-DB_DATABASE=subscription_app_test
 DB_USERNAME=app
 DB_PASSWORD=change-me
 ```
 
-DB 自体は事前に作成（[local-development.ja.md](./local-development.ja.md) の「データベース作成」）。マイグレーションは `RefreshDatabase` / `DatabaseMigrations` トレイトがテスト単位で走らせるため手動適用は不要。
+`hatanaka_testing` DB は事前に作成しておく（[local-development.ja.md](./local-development.ja.md) の「データベース作成」）。マイグレーションは `RefreshDatabase` / `DatabaseMigrations` トレイトがテスト単位で走らせるため手動適用は不要。
 
 > テストは MariaDB / MySQL 想定。`subscriptions.active_user_id` の生成カラムが MySQL 系の構文に依存しており、SQLite では動かない。
 

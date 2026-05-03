@@ -13,7 +13,6 @@ A sample project built with Laravel 12 + React 19 + Inertia.js + TypeScript that
 ### Authentication
 
 - User registration / login / logout
-- Email verification
 
 ### Subscription management
 
@@ -47,72 +46,77 @@ A sample project built with Laravel 12 + React 19 + Inertia.js + TypeScript that
 - PHP 8.3+
 - Node.js v22+
 - Composer
-- MySQL 8.0+ or MariaDB
+- Docker Desktop (recommended path) — or MySQL 8.0+ / MariaDB 10.6+ (manual path)
 - A Fincode account (test mode is sufficient)
 
-> **Recommended toolchain**: Git Bash (on Windows) + Volta + Mailpit + an active pre-commit hook. All free OSS. See [docs/getting-started/local-development.md](./docs/getting-started/local-development.md#0-recommended-toolchain) for details.
+You can verify registration / login flows without Fincode keys; reaching the checkout screen requires `m_test_*` / `p_test_*` keys. See [docs/getting-started/fincode-setup.md](./docs/getting-started/fincode-setup.md) to obtain them. The Fincode developer documentation is primarily in Japanese — see [docs.fincode.jp](https://docs.fincode.jp/).
 
-### 1. Clone and install
+### Quick start (Docker, recommended)
+
+The included Compose file boots MySQL and Mailpit, so you don't need a local MySQL.
 
 ```bash
 git clone https://github.com/ltac0203-pixel/hatanaka.git
 cd hatanaka
 
-# Install deps, copy .env, generate APP_KEY, build assets (no migrations yet)
-composer setup
+composer setup            # Install deps, copy .env, generate APP_KEY, build assets
+docker compose up -d      # Start MySQL (:3307) and Mailpit (:8025)
 ```
 
-### 2. Configure environment variables
-
-Edit `.env` and set the following:
+Edit `.env` to point at the Docker DB and set Fincode keys:
 
 ```ini
-# Database
 DB_HOST=127.0.0.1
-DB_DATABASE=subscription_app
-DB_USERNAME=your_db_user
-DB_PASSWORD=your_db_password
+DB_PORT=3307
+DB_DATABASE=hatanaka
+DB_USERNAME=hatanaka
+DB_PASSWORD=hatanaka
 
-# Fincode Configuration
 FINCODE_API_KEY=m_test_...
 FINCODE_PUBLIC_KEY=p_test_...
 FINCODE_BASE_URL=https://api.test.fincode.jp
+
+# Optional: route mail to Mailpit
+MAIL_MAILER=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=1025
 ```
-
-Obtain `FINCODE_API_KEY` and `FINCODE_PUBLIC_KEY` from the Fincode management console. Test keys are prefixed with `m_test_` / `p_test_`. Set `FINCODE_BASE_URL` to `https://api.fincode.jp` for production or `https://api.test.fincode.jp` for testing.
-
-### 3. Run migrations
-
-After the database is created and `.env` is configured, run migrations:
 
 ```bash
-composer setup:db
+composer setup:db         # Run migrations
+composer dev              # Run Laravel + Vite + Queue concurrently
 ```
 
-This is split from `composer setup` because migrations require valid DB credentials, which you set in step 2.
+| Service | URL |
+| --- | --- |
+| App | http://localhost:8000 |
+| Mailpit (mail UI) | http://localhost:8025 |
 
-See [docs/getting-started/fincode-setup.md](./docs/getting-started/fincode-setup.md) for step-by-step Fincode account setup. The Fincode developer documentation is primarily in Japanese — see [docs.fincode.jp](https://docs.fincode.jp/).
+### Manual setup (local MySQL)
 
-#### Enable the pre-commit hook (recommended)
+If you'd rather not use Docker. See [docs/getting-started/local-development.md](./docs/getting-started/local-development.md) for the full guide.
+
+1. Create a database and user in MySQL
+    ```sql
+    CREATE DATABASE subscription_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE USER 'app'@'localhost' IDENTIFIED BY 'change-me';
+    GRANT ALL ON subscription_app.* TO 'app'@'localhost';
+    ```
+2. `composer setup`
+3. Edit `.env` (DB credentials and Fincode keys)
+4. `composer setup:db`
+5. `composer dev` → http://localhost:8000
+
+### Enable the pre-commit hook (recommended)
 
 ```bash
 git config core.hooksPath .githooks
 
-# macOS / Linux
+# macOS / Linux only
 chmod +x .githooks/pre-commit scripts/check-secrets.sh
 ```
 
-The hook runs `scripts/check-secrets.sh --staged` to detect accidentally staged `.env` files and API key patterns.
-On Windows where `chmod` is unavailable, only `git config core.hooksPath .githooks` is required.
-
-### 4. Run the application
-
-```bash
-# Run Laravel + Vite + Queue concurrently
-composer dev
-```
-
-Open `http://localhost:8000` in your browser.
+The hook runs `scripts/check-secrets.sh --staged` to detect accidentally staged `.env` files and API key patterns. On Windows where `chmod` is unavailable, only the first line is required.
 
 ## Command reference
 
