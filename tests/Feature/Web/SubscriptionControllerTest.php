@@ -198,13 +198,6 @@ class SubscriptionControllerTest extends TestCase
     {
         [$user, $plan, $card] = $this->createFullSetup();
 
-        $planService = Mockery::mock(PlanService::class);
-        $planService->shouldReceive('findActivePlanOrFail')
-            ->once()
-            ->with($plan['fincode_plan_id'])
-            ->andReturn($plan);
-        $this->app->instance(PlanService::class, $planService);
-
         $mockSubscription = Subscription::make([
             'user_id' => $user->id,
             'fincode_plan_id' => $plan['fincode_plan_id'],
@@ -220,8 +213,14 @@ class SubscriptionControllerTest extends TestCase
         ]);
 
         $subscriptionManager = Mockery::mock(SubscriptionManager::class);
-        $subscriptionManager->shouldReceive('create')
+        $subscriptionManager->shouldReceive('createForPlan')
             ->once()
+            ->with(
+                Mockery::on(fn ($u) => $u->id === $user->id),
+                $plan['fincode_plan_id'],
+                Mockery::on(fn ($c) => $c->id === $card->id),
+                now()->format('Y-m-d')
+            )
             ->andReturn($mockSubscription);
         $this->app->instance(SubscriptionManager::class, $subscriptionManager);
 
@@ -359,15 +358,8 @@ class SubscriptionControllerTest extends TestCase
     {
         [$user, $plan, $card] = $this->createFullSetup();
 
-        $planService = Mockery::mock(PlanService::class);
-        $planService->shouldReceive('findActivePlanOrFail')
-            ->once()
-            ->with($plan['fincode_plan_id'])
-            ->andReturn($plan);
-        $this->app->instance(PlanService::class, $planService);
-
         $subscriptionManager = Mockery::mock(SubscriptionManager::class);
-        $subscriptionManager->shouldReceive('create')
+        $subscriptionManager->shouldReceive('createForPlan')
             ->once()
             ->andThrow(new ActiveSubscriptionExistsException);
         $this->app->instance(SubscriptionManager::class, $subscriptionManager);

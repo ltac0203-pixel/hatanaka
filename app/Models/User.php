@@ -66,7 +66,7 @@ class User extends Authenticatable
     public function activeSubscription(): HasOne
     {
         return $this->hasOne(Subscription::class)
-            ->where('status', SubscriptionStatus::Active->value);
+            ->where('status', SubscriptionStatus::Active);
     }
 
     public function auditLogs(): HasMany
@@ -77,7 +77,7 @@ class User extends Authenticatable
     public function hasActiveSubscription(): bool
     {
         return $this->activeSubscriptionCache ??= $this->subscriptions()
-            ->where('status', SubscriptionStatus::Active->value)
+            ->where('status', SubscriptionStatus::Active)
             ->exists();
     }
 

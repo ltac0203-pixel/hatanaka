@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\SubscriptionStatus;
 use App\Models\FincodeCard;
 use App\Models\FincodeCustomer;
 use App\Models\Subscription;
@@ -109,7 +110,7 @@ class SubscriptionTest extends TestCase
 
         $subscription->refresh();
 
-        $this->assertSame('canceled', $subscription->status);
+        $this->assertSame(SubscriptionStatus::Canceled, $subscription->status);
         $this->assertNotNull($subscription->canceled_at);
         $this->assertSame(now()->toDateString(), $subscription->stop_date->toDateString());
     }
@@ -156,7 +157,7 @@ class SubscriptionTest extends TestCase
 
         $this->assertCount(2, $activeSubscriptions);
         $activeSubscriptions->each(function ($subscription) {
-            $this->assertSame('active', $subscription->status);
+            $this->assertSame(SubscriptionStatus::Active, $subscription->status);
         });
     }
 

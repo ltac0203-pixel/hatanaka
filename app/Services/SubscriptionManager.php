@@ -14,6 +14,7 @@ use App\Exceptions\FincodeApiException;
 use App\Models\FincodeCard;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -39,11 +40,23 @@ class SubscriptionManager
     public function __construct(
         FincodeSubscriptionService $subscriptionService,
         CustomerSyncService $customerSyncService,
-        RequestContextResolver $requestContextResolver
+        RequestContextResolver $requestContextResolver,
+        private PlanService $planService
     ) {
         $this->subscriptionService = $subscriptionService;
         $this->customerSyncService = $customerSyncService;
         $this->requestContextResolver = $requestContextResolver;
+    }
+
+    /**
+     * Plan ID から契約可能性を確認した上で契約を作成する。
+     * Web/API いずれの Controller も Plan 解決を Service 層に委ね、二重実装を避ける。
+     */
+    public function createForPlan(User $user, string $fincodePlanId, FincodeCard $card, string $startDate): Subscription
+    {
+        $planData = $this->planService->findActivePlanOrFail($fincodePlanId);
+
+        return $this->create($user, $planData, $card, $startDate);
     }
 
     public function create(User $user, array $planData, FincodeCard $card, string $startDate): Subscription
@@ -118,7 +131,7 @@ class SubscriptionManager
                     ]);
                     $resolvedStatus = SubscriptionStatus::Incomplete;
                 }
-                $subscription->status = $resolvedStatus->value;
+                $subscription->status = $resolvedStatus;
                 $subscription->save();
             } catch (QueryException $e) {
                 if ($this->isActiveSubscriptionUniqueConstraintViolation($e)) {
@@ -159,7 +172,7 @@ class SubscriptionManager
     {
         $hasActiveSubscription = Subscription::query()
             ->where('user_id', $user->id)
-            ->where('status', SubscriptionStatus::Active->value)
+            ->where('status', SubscriptionStatus::Active)
             ->whereNull('deleted_at')
             ->exists();
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SubscriptionStatus;
 use App\Events\SubscriptionCanceled;
 use App\Events\SubscriptionStatusChanged;
 use App\Exceptions\FincodeApiException;
@@ -199,7 +200,7 @@ class ProfileTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
         $this->assertNotNull($user->fresh());
-        $this->assertSame('active', $subscription->fresh()->status);
+        $this->assertSame(SubscriptionStatus::Active, $subscription->fresh()->status);
         Event::assertNotDispatched(SubscriptionCanceled::class);
         Event::assertNotDispatched(SubscriptionStatusChanged::class);
     }
