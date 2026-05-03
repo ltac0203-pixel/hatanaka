@@ -29,10 +29,11 @@ class AuditLogger
     ): AuditLog {
         $requestContext = $this->requestContextResolver->resolve();
 
-        return AuditLog::create([
-            'user_id' => $user?->id,
+        // user_id は AuditLog の $fillable から外している（外部入力経由の汚染を避けるため）。
+        // ここでは AuditLogger 経由の正規ルートで明示的に直接代入する。
+        $auditLog = new AuditLog([
             'event' => $event,
-            'auditable_type' => get_class($auditable),
+            'auditable_type' => $auditable::class,
             'auditable_id' => $auditable->id,
             'old_values' => $oldValues,
             'new_values' => $newValues,
@@ -40,5 +41,9 @@ class AuditLogger
             'user_agent' => $userAgent ?? $requestContext->userAgent,
             'metadata' => $metadata,
         ]);
+        $auditLog->user_id = $user?->id;
+        $auditLog->save();
+
+        return $auditLog;
     }
 }

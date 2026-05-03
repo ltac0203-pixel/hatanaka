@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class AuditLog extends Model
 {
+    // user_id は意図的に $fillable から除外している。
+    // 外部入力からの mass-assignment による汚染を防ぐため、設定は AuditLogger::log() 経由のみとする。
     protected $fillable = [
-        'user_id',
         'event',
         'auditable_type',
         'auditable_id',
