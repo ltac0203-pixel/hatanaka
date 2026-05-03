@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\SubscriptionResultStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -33,6 +34,7 @@ class SubscriptionResult extends Model
         return [
             'amount' => 'integer',
             'tax' => 'integer',
+            'status' => SubscriptionResultStatus::class,
             'charged_at_date' => 'date',
             'charged_at' => 'datetime',
             'fincode_response' => 'array',
@@ -52,6 +54,6 @@ class SubscriptionResult extends Model
 
     public function isSuccessful(): bool
     {
-        return $this->status === 'success';
+        return $this->status === SubscriptionResultStatus::Success;
     }
 }

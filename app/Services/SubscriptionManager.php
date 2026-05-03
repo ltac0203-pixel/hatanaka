@@ -118,7 +118,7 @@ class SubscriptionManager
                     ]);
                     $resolvedStatus = SubscriptionStatus::Incomplete;
                 }
-                $subscription->status = $resolvedStatus->value;
+                $subscription->status = $resolvedStatus;
                 $subscription->save();
             } catch (QueryException $e) {
                 if ($this->isActiveSubscriptionUniqueConstraintViolation($e)) {
@@ -159,7 +159,7 @@ class SubscriptionManager
     {
         $hasActiveSubscription = Subscription::query()
             ->where('user_id', $user->id)
-            ->where('status', SubscriptionStatus::Active->value)
+            ->where('status', SubscriptionStatus::Active)
             ->whereNull('deleted_at')
             ->exists();
 
