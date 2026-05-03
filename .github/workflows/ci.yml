@@ -149,6 +149,12 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run frontend tests (Vitest)
+        run: npm run test:run
+
       - name: Run Pint (lint)
         run: ./vendor/bin/pint --test
 
