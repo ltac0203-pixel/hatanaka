@@ -30,7 +30,7 @@ class SubscriptionService
         // DELETE /v1/subscriptions/{id} は課金開始日と同日でも受理されるため、解約はこちらに寄せる。
         // pay_type は query で必須 (ES002023001 決済種別が指定されていません)。
         return $this->client->delete("/v1/subscriptions/{$subscriptionId}", [
-            'pay_type' => 'Card',
+            'pay_type' => FincodePayType::CARD,
         ]);
     }
 

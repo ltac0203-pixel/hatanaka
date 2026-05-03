@@ -14,6 +14,7 @@ use App\Exceptions\FincodeApiException;
 use App\Models\FincodeCard;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Fincode\FincodePayType;
 use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use Carbon\Carbon;
@@ -84,7 +85,7 @@ class SubscriptionManager
             try {
                 $response = $this->subscriptionService->create([
                     // Fincode のサブスク作成は決済種別が必須 (ES001023001)。本実装はカード決済のみを想定する。
-                    'pay_type' => 'Card',
+                    'pay_type' => FincodePayType::CARD,
                     'plan_id' => $planData['fincode_plan_id'],
                     'customer_id' => $customer->fincode_customer_id,
                     'card_id' => $card->fincode_card_id,
