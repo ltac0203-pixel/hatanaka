@@ -118,7 +118,7 @@ class CardManager
      */
     private function splitExpire(string $expire): array
     {
-        $digits = preg_replace('/\D/', '', $expire) ?? '';
+        $digits = (string) preg_replace('/\D/', '', $expire);
         if (strlen($digits) !== 4) {
             return [0, 0];
         }
