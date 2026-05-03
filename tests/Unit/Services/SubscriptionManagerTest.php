@@ -14,6 +14,7 @@ use App\Models\FincodeCustomer;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\CustomerSyncService;
+use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use App\Services\RequestContextResolver;
 use App\Services\SubscriptionManager;
@@ -43,7 +44,8 @@ class SubscriptionManagerTest extends TestCase
         $this->manager = new SubscriptionManager(
             $this->mockSubscriptionService,
             $this->mockCustomerSyncService,
-            new RequestContextResolver($this->app)
+            new RequestContextResolver($this->app),
+            Mockery::mock(PlanService::class)
         );
     }
 

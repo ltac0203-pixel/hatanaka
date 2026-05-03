@@ -28,7 +28,11 @@ class CardController extends Controller
 
     public function store(StoreCardRequest $request): JsonResponse
     {
-        $card = $this->createCardFromRequest($request);
+        $card = $this->cardManager->create(
+            $request->user(),
+            $request->validated('token'),
+            $request->boolean('is_default')
+        );
 
         return response()->json([
             'data' => new CardResource($card),
@@ -42,16 +46,5 @@ class CardController extends Controller
         $this->cardManager->delete($card);
 
         return response()->json(['message' => 'カードを削除しました。']);
-    }
-
-    private function createCardFromRequest(StoreCardRequest $request): FincodeCard
-    {
-        $validated = $request->validated();
-
-        return $this->cardManager->create(
-            $request->user(),
-            $validated['token'],
-            $request->boolean('is_default')
-        );
     }
 }

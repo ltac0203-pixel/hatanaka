@@ -10,7 +10,6 @@ use App\Http\Resources\SubscriptionResource;
 use App\Http\Resources\SubscriptionResultResource;
 use App\Models\Subscription;
 use App\Models\SubscriptionResult;
-use App\Services\Fincode\PlanService;
 use App\Services\SubscriptionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +18,6 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private PlanService $planService,
         private SubscriptionManager $subscriptionManager
     ) {}
 
@@ -38,7 +36,14 @@ class SubscriptionController extends Controller
 
     public function store(StoreSubscriptionRequest $request): JsonResponse
     {
-        $subscription = $this->createSubscriptionFromRequest($request);
+        $validated = $request->validated();
+
+        $subscription = $this->subscriptionManager->createForPlan(
+            $request->user(),
+            $validated['fincode_plan_id'],
+            $request->getValidatedCard(),
+            $validated['start_date']
+        );
 
         return response()->json([
             'data' => new SubscriptionResource($subscription),
@@ -70,20 +75,6 @@ class SubscriptionController extends Controller
             ->paginate(20);
 
         return SubscriptionResultResource::collection($results);
-    }
-
-    private function createSubscriptionFromRequest(StoreSubscriptionRequest $request): Subscription
-    {
-        $validated = $request->validated();
-        $card = $request->getValidatedCard();
-        $planData = $this->planService->findActivePlanOrFail($validated['fincode_plan_id']);
-
-        return $this->subscriptionManager->create(
-            $request->user(),
-            $planData,
-            $card,
-            $validated['start_date']
-        );
     }
 
     private function findActiveSubscription(Request $request): ?Subscription
