@@ -42,11 +42,11 @@ CREATE USER 'app'@'localhost' IDENTIFIED BY 'change-me';
 GRANT ALL ON subscription_app.* TO 'app'@'localhost';
 ```
 
-テスト用も作成：
+テスト用も作成（DB 名は `phpunit.xml` で固定）：
 
 ```sql
-CREATE DATABASE subscription_app_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-GRANT ALL ON subscription_app_test.* TO 'app'@'localhost';
+CREATE DATABASE hatanaka_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL ON hatanaka_testing.* TO 'app'@'localhost';
 ```
 
 ## 2. `composer setup` 実行

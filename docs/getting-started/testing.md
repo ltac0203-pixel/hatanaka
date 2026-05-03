@@ -22,18 +22,17 @@ php artisan test --testsuite=Feature
 
 ## Test database
 
-`phpunit.xml` sets `DB_CONNECTION=mysql` and overrides charset/collation, but **does not** set `DB_DATABASE`. Provide it via `.env.testing`:
+`phpunit.xml` pins `DB_CONNECTION=mysql` and `DB_DATABASE=hatanaka_testing` (along with charset/collation), so the test suite always runs against a dedicated `hatanaka_testing` database regardless of `.env`. Connection credentials still come from `.env.testing`:
 
 ```ini
 # .env.testing
 APP_ENV=testing
 DB_CONNECTION=mysql
-DB_DATABASE=subscription_app_test
 DB_USERNAME=app
 DB_PASSWORD=change-me
 ```
 
-Create the database once (see [local-development.md](./local-development.md) — "Create the database"). PHPUnit applies migrations through `RefreshDatabase` / `DatabaseMigrations` traits at the test level; you do not need to migrate manually.
+Create the `hatanaka_testing` database once (see [local-development.md](./local-development.md) — "Create the database"). PHPUnit applies migrations through `RefreshDatabase` / `DatabaseMigrations` traits at the test level; you do not need to migrate manually.
 
 > Tests target MariaDB / MySQL because the `subscriptions.active_user_id` virtual column relies on MySQL-specific generated-column syntax. SQLite cannot run the suite as-is.
 
