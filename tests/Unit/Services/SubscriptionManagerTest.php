@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\SubscriptionStatus;
 use App\Events\SubscriptionCanceled;
 use App\Events\SubscriptionCreated;
 use App\Events\SubscriptionStatusChanged;
@@ -13,6 +14,8 @@ use App\Models\FincodeCustomer;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\CustomerSyncService;
+use App\Services\Fincode\FincodePayType;
+use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use App\Services\RequestContextResolver;
 use App\Services\SubscriptionManager;
@@ -42,7 +45,8 @@ class SubscriptionManagerTest extends TestCase
         $this->manager = new SubscriptionManager(
             $this->mockSubscriptionService,
             $this->mockCustomerSyncService,
-            new RequestContextResolver($this->app)
+            new RequestContextResolver($this->app),
+            Mockery::mock(PlanService::class)
         );
     }
 
@@ -131,7 +135,7 @@ class SubscriptionManagerTest extends TestCase
             ->withArgs(function (array $payload, ?string $idempotencyKey) use ($expectedIdempotencyKey): bool {
                 return $payload === [
                     // Fincode のサブスク作成は決済種別必須 (ES001023001)。本実装はカード決済固定。
-                    'pay_type' => 'Card',
+                    'pay_type' => FincodePayType::CARD,
                     'plan_id' => 'pl_test',
                     'customer_id' => 'cus_sub_test',
                     'card_id' => 'card_sub_test',
@@ -416,7 +420,7 @@ class SubscriptionManagerTest extends TestCase
         $this->manager->cancel($subscription);
 
         $subscription->refresh();
-        $this->assertSame('canceled', $subscription->status);
+        $this->assertSame(SubscriptionStatus::Canceled, $subscription->status);
         $this->assertNotNull($subscription->canceled_at);
         $this->assertNotNull($subscription->stop_date);
     }
@@ -539,6 +543,6 @@ class SubscriptionManagerTest extends TestCase
 
         $subscription = $this->manager->create($user, $planData, $card, '2026-03-01');
 
-        $this->assertSame('incomplete', $subscription->status);
+        $this->assertSame(SubscriptionStatus::Incomplete, $subscription->status);
     }
 }

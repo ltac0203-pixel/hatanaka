@@ -17,9 +17,9 @@ Route::get('/', function (Request $request) {
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // 契約候補を比較して選べるよう、プラン参照系の導線をまとめる。
     Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
     Route::get('/plans/{fincode_plan_id}', [PlanController::class, 'show'])

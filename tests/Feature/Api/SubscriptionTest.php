@@ -7,7 +7,6 @@ use App\Models\FincodeCard;
 use App\Models\FincodeCustomer;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\Fincode\PlanService;
 use App\Services\SubscriptionManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -100,13 +99,6 @@ class SubscriptionTest extends TestCase
         [$user, $plan, $card] = $this->createFullSetup();
         $startDate = now()->addDay()->toDateString();
 
-        $planService = Mockery::mock(PlanService::class);
-        $planService->shouldReceive('findActivePlanOrFail')
-            ->once()
-            ->with($plan['fincode_plan_id'])
-            ->andReturn($plan);
-        $this->app->instance(PlanService::class, $planService);
-
         $mockSubscription = new Subscription([
             'user_id' => $user->id,
             'fincode_plan_id' => $plan['fincode_plan_id'],
@@ -125,8 +117,14 @@ class SubscriptionTest extends TestCase
         $mockSubscription->setRelation('card', $card);
 
         $manager = Mockery::mock(SubscriptionManager::class);
-        $manager->shouldReceive('create')
+        $manager->shouldReceive('createForPlan')
             ->once()
+            ->with(
+                Mockery::on(fn ($u) => $u->id === $user->id),
+                $plan['fincode_plan_id'],
+                Mockery::on(fn ($c) => $c->id === $card->id),
+                $startDate
+            )
             ->andReturn($mockSubscription);
         $this->app->instance(SubscriptionManager::class, $manager);
 
@@ -156,15 +154,8 @@ class SubscriptionTest extends TestCase
         [$user, $plan, $card] = $this->createFullSetup();
         $startDate = now()->addDay()->toDateString();
 
-        $planService = Mockery::mock(PlanService::class);
-        $planService->shouldReceive('findActivePlanOrFail')
-            ->once()
-            ->with($plan['fincode_plan_id'])
-            ->andReturn($plan);
-        $this->app->instance(PlanService::class, $planService);
-
         $manager = Mockery::mock(SubscriptionManager::class);
-        $manager->shouldReceive('create')
+        $manager->shouldReceive('createForPlan')
             ->once()
             ->andThrow(new ActiveSubscriptionExistsException);
         $this->app->instance(SubscriptionManager::class, $manager);

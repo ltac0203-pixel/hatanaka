@@ -353,7 +353,14 @@ class FincodeClient
         ]);
     }
 
-    protected function maskSensitiveData($data)
+    /**
+     * 配列を再帰的に走査して SENSITIVE_KEYS に該当するキーを `***MASKED***` に置換する。
+     * 配列以外の値（文字列・数値・null など）はそのまま返す（プリミティブはマスク対象にしない）。
+     *
+     * @param  mixed  $data  ログ出力対象の値。通常は API レスポンスをデコードした連想配列だが、
+     *                       スカラーや null も許容する。
+     */
+    protected function maskSensitiveData($data): mixed
     {
         if (! is_array($data)) {
             return $data;

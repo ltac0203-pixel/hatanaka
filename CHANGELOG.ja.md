@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+### 削除
+
+- メール認証機能: `MustVerifyEmail` インターフェース、Web ルートの `verified` ミドルウェア、`/verify-email/*` エンドポイント、`VerifyEmail` ページ、`users.email_verified_at` カラムを削除。リファレンス実装としての主動線（決済フロー）に集中するため、登録直後はそのまま `/dashboard` へ遷移する。再導入したい場合の手順は [docs/customization/index.ja.md](./docs/customization/index.ja.md) を参照。
+
 ## [0.1.0] - 2026-05-01
 
 オープンソースのリファレンス実装としての初回公開リリース。

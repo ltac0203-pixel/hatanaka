@@ -9,7 +9,6 @@ use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Resources\CardResource;
 use App\Http\Resources\SubscriptionResource;
 use App\Models\Subscription;
-use App\Services\Fincode\PlanService;
 use App\Services\SubscriptionManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +18,6 @@ use Inertia\Response;
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private PlanService $planService,
         private SubscriptionManager $subscriptionManager
     ) {}
 
@@ -37,8 +35,15 @@ class SubscriptionController extends Controller
 
     public function store(StoreSubscriptionRequest $request): RedirectResponse
     {
+        $validated = $request->validated();
+
         try {
-            $this->createSubscriptionFromRequest($request);
+            $this->subscriptionManager->createForPlan(
+                $request->user(),
+                $validated['fincode_plan_id'],
+                $request->getValidatedCard(),
+                $validated['start_date']
+            );
         } catch (FincodeApiException) {
             return redirect()->route('subscription.index')
                 ->withErrors([
@@ -65,19 +70,5 @@ class SubscriptionController extends Controller
 
         return redirect()->route('subscription.index')
             ->with('success', 'サブスクリプションを解約しました。');
-    }
-
-    private function createSubscriptionFromRequest(StoreSubscriptionRequest $request): Subscription
-    {
-        $validated = $request->validated();
-        $card = $request->getValidatedCard();
-        $planData = $this->planService->findActivePlanOrFail($validated['fincode_plan_id']);
-
-        return $this->subscriptionManager->create(
-            $request->user(),
-            $planData,
-            $card,
-            $validated['start_date']
-        );
     }
 }

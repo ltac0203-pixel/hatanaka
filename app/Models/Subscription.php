@@ -44,6 +44,7 @@ class Subscription extends Model
             'plan_amount' => 'integer',
             'plan_interval_count' => 'integer',
             'plan_snapshot' => 'array',
+            'status' => SubscriptionStatus::class,
             'start_date' => 'date',
             'stop_date' => 'date',
             'next_charge_date' => 'date',
@@ -70,17 +71,17 @@ class Subscription extends Model
 
     public function isActive(): bool
     {
-        return $this->status === SubscriptionStatus::Active->value;
+        return $this->status === SubscriptionStatus::Active;
     }
 
     public function isCanceled(): bool
     {
-        return $this->status === SubscriptionStatus::Canceled->value;
+        return $this->status === SubscriptionStatus::Canceled;
     }
 
     public function cancel(): void
     {
-        $this->status = SubscriptionStatus::Canceled->value;
+        $this->status = SubscriptionStatus::Canceled;
         $this->canceled_at = now();
         $this->stop_date = now()->toDateString();
         $this->save();
@@ -89,7 +90,7 @@ class Subscription extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query
-            ->where('status', SubscriptionStatus::Active->value)
+            ->where('status', SubscriptionStatus::Active)
             ->whereNull($query->getModel()->getQualifiedDeletedAtColumn());
     }
 }

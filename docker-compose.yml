@@ -37,4 +37,3 @@ services:
 volumes:
   hatanaka_db:
     name: hatanaka_db
-    external: true

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\SubscriptionStatus;
 use App\Models\FincodeCard;
 use App\Models\FincodeCustomer;
 use App\Models\Subscription;
@@ -254,7 +255,7 @@ class UserModelTest extends TestCase
         $activeSubscription = $this->user->activeSubscription()->with('card')->first();
 
         $this->assertInstanceOf(Subscription::class, $activeSubscription);
-        $this->assertSame('active', $activeSubscription->status);
+        $this->assertSame(SubscriptionStatus::Active, $activeSubscription->status);
         $this->assertSame('Active Plan', $activeSubscription->plan_name);
         $this->assertTrue($activeSubscription->relationLoaded('card'));
         $this->assertInstanceOf(FincodeCard::class, $activeSubscription->card);

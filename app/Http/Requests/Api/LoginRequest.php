@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
+    /** @var list<string> */
     public const ALLOWED_ABILITIES = [
         'subscription:read',
         'subscription:write',
@@ -16,6 +17,7 @@ class LoginRequest extends FormRequest
         'card:write',
     ];
 
+    /** @var list<string> */
     public const DEFAULT_ABILITIES = [
         'subscription:read',
         'card:read',

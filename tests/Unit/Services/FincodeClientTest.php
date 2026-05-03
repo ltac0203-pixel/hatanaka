@@ -8,6 +8,7 @@ use App\Exceptions\FincodeServerException;
 use App\Exceptions\FincodeTimeoutException;
 use App\Services\Fincode\CircuitBreaker;
 use App\Services\Fincode\FincodeClient;
+use App\Services\Fincode\FincodePayType;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
@@ -138,7 +139,7 @@ class FincodeClientTest extends TestCase
         // クエリ引数を伴う DELETE エンドポイント向けに、URL に乗せる契約をリグレッションさせない。
         $this->mockHandler->append(new Response(200, [], json_encode(['ok' => true])));
 
-        $this->service->delete('/v1/subscriptions/sub_1', ['pay_type' => 'Card']);
+        $this->service->delete('/v1/subscriptions/sub_1', ['pay_type' => FincodePayType::CARD]);
 
         $request = $this->history[0]['request'];
         $this->assertSame('DELETE', $request->getMethod());
