@@ -106,6 +106,11 @@ class SubscriptionManagerTest extends TestCase
         ]));
     }
 
+    private function expectedCancelIdempotencyKey(string $subscriptionId): string
+    {
+        return 'subscription:cancel:'.hash('sha256', $subscriptionId);
+    }
+
     private function setRequestContext(string $ipAddress, string $userAgent): void
     {
         $request = $this->app['request'];
@@ -384,7 +389,7 @@ class SubscriptionManagerTest extends TestCase
 
         $this->mockSubscriptionService->shouldReceive('cancel')
             ->once()
-            ->with('sub_cancel_api');
+            ->with('sub_cancel_api', $this->expectedCancelIdempotencyKey('sub_cancel_api'));
 
         $this->manager->cancel($subscription);
     }

@@ -136,8 +136,7 @@ class FincodeClientTest extends TestCase
 
     public function test_delete_passes_query_parameters(): void
     {
-        // Fincode のサブスク削除のように pay_type を query で要求する API があるため、
-        // delete() がクエリ引数を URL に乗せる契約をリグレッションさせない。
+        // クエリ引数を伴う DELETE エンドポイント向けに、URL に乗せる契約をリグレッションさせない。
         $this->mockHandler->append(new Response(200, [], json_encode(['ok' => true])));
 
         $this->service->delete('/v1/subscriptions/sub_1', ['pay_type' => FincodePayType::CARD]);
@@ -145,6 +144,34 @@ class FincodeClientTest extends TestCase
         $request = $this->history[0]['request'];
         $this->assertSame('DELETE', $request->getMethod());
         $this->assertSame('pay_type=Card', $request->getUri()->getQuery());
+    }
+
+    public function test_delete_with_idempotency_key_sends_header(): void
+    {
+        $this->mockHandler->append(new Response(200, [], json_encode(['ok' => true])));
+
+        $this->service->delete('/v1/subscriptions/sub_1', [], 'my-delete-key');
+
+        $request = $this->history[0]['request'];
+        $this->assertSame('DELETE', $request->getMethod());
+        $this->assertSame('my-delete-key', $request->getHeaderLine('Idempotency-Key'));
+    }
+
+    public function test_delete_generates_idempotency_key_when_null(): void
+    {
+        $this->mockHandler->append(new Response(200, [], json_encode([])));
+
+        $this->service->delete('/v1/subscriptions/sub_1');
+
+        $request = $this->history[0]['request'];
+        $idempotencyKey = $request->getHeaderLine('Idempotency-Key');
+        $this->assertNotEmpty($idempotencyKey);
+        // DELETE 系もリトライ時に同一キーを再送して Fincode 側で deduplicate させるため、
+        // post()/put() と同じ UUID 形式で自動生成されることを保証する。
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $idempotencyKey
+        );
     }
 
     public function test_request_includes_bearer_auth(): void
