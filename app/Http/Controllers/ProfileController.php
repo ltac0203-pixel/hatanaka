@@ -54,9 +54,7 @@ class ProfileController extends Controller
             });
         } catch (FincodeApiException) {
             return redirect()->route('profile.edit')
-                ->withErrors([
-                    'account' => '退会処理に失敗しました。時間をおいて再試行してください。',
-                ]);
+                ->with('error', '退会処理に失敗しました。時間をおいて再試行してください。');
         }
 
         Auth::logout();

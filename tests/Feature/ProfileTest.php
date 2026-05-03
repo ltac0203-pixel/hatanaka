@@ -195,7 +195,7 @@ class ProfileTest extends TestCase
             ]);
 
         $response
-            ->assertSessionHasErrors('account')
+            ->assertSessionHas('error', '退会処理に失敗しました。時間をおいて再試行してください。')
             ->assertRedirect('/profile');
 
         $this->assertAuthenticatedAs($user);
