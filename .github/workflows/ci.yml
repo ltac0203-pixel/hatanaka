@@ -149,6 +149,14 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run frontend tests (Vitest)
+        run: npm run test:run
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: 1
+
       - name: Run Pint (lint)
         run: ./vendor/bin/pint --test
 
