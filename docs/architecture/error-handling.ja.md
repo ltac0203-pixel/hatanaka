@@ -52,7 +52,7 @@ classDiagram
 
 | 例外 | 発生箇所 | 発生理由 |
 | --- | --- | --- |
-| `ActiveSubscriptionExistsException` | `SubscriptionManager.subscribe` | 既にアクティブ契約あり。クライアントには 409 Conflict。DB 側の `active_user_id` 一意制約が二重防御（[data-model.ja.md](./data-model.ja.md) 参照） |
+| `ActiveSubscriptionExistsException` | `SubscriptionManager.subscribe` | 既にアクティブ契約あり。クライアントには 422 Unprocessable Entity（`fincode_plan_id` キーのバリデーション形式）。DB 側の `active_user_id` 一意制約が二重防御（[data-model.ja.md](./data-model.ja.md) 参照） |
 | `CardInUseException` | `CardManager.delete` | アクティブ契約から参照されているカード。先に解約またはカード変更が必要 |
 | `ExpiredCardException` | `CardManager.register` / `SubscriptionManager.subscribe` | 有効期限切れ。Fincode 呼び出し前に検出 |
 | `PlanUnavailableException` | `PlanService.fetch` / `SubscriptionManager.subscribe` | 要求プランが Fincode 上に存在しないか非アクティブ |

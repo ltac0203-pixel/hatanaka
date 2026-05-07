@@ -115,7 +115,7 @@ sequenceDiagram
     SM->>DB: SELECT active subscription (active_user_id unique index)
     alt already active
         SM-->>L: throw ActiveSubscriptionExistsException
-        L-->>U: 409 Conflict
+        L-->>U: 422 Unprocessable Entity
     end
     SM->>PS: fetch(planId)
     PS->>FC: GET /v1/plans/{planId}

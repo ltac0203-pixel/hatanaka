@@ -6,7 +6,7 @@ English version: [README.md](./README.md)
 
 | ファイル                     | 説明                                                                |
 | ---------------------------- | ------------------------------------------------------------------- |
-| [openapi.yml](./openapi.yml) | **本アプリ REST API** の OpenAPI 3.0.3 仕様書（全13エンドポイント） |
+| [openapi.yml](./openapi.yml) | **本アプリ REST API** の OpenAPI 3.0.3 仕様書（全14エンドポイント） |
 
 > **重要:** `openapi.yml` は本アプリが外部に公開するAPIの仕様です。
 > Fincode APIはサーバーサイドのみが直接呼び出します（フロントエンドからは呼び出しません）。
@@ -65,17 +65,18 @@ Authorization: Bearer 1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | -------- | -------------------------------- | ---- | ---------- | ---------------------------------- |
 | POST     | `/api/register`                  | 不要 | 5回/分     | ユーザー登録                       |
 | POST     | `/api/login`                     | 不要 | 5回/分     | ログイン                           |
-| GET      | `/api/session-status`            | 不要 | -          | 認証状態確認                       |
-| POST     | `/api/logout`                    | 必須 | -          | ログアウト                         |
-| GET      | `/api/user`                      | 必須 | -          | 認証ユーザー情報取得               |
-| GET      | `/api/subscription`              | 必須 | -          | アクティブなサブスクリプション取得 |
+| POST     | `/api/security/csp-reports`      | 不要 | 30回/分    | CSP 違反レポート受信               |
+| GET      | `/api/session-status`            | 必須 | 60回/分    | 認証状態確認                       |
+| POST     | `/api/logout`                    | 必須 | 60回/分    | ログアウト                         |
+| GET      | `/api/user`                      | 必須 | 60回/分    | 認証ユーザー情報取得               |
+| GET      | `/api/subscription`              | 必須 | 60回/分    | アクティブなサブスクリプション取得 |
 | POST     | `/api/subscription`              | 必須 | 3回/分     | サブスクリプション登録             |
-| DELETE   | `/api/subscription`              | 必須 | -          | サブスクリプション解約             |
-| GET      | `/api/subscription/history`      | 必須 | -          | 決済履歴取得（ページネーション）   |
-| GET      | `/api/subscription/plans`        | 必須 | -          | アクティブプラン一覧取得           |
-| GET      | `/api/subscription/cards`        | 必須 | -          | 登録済みカード一覧取得             |
+| DELETE   | `/api/subscription`              | 必須 | 5回/分     | サブスクリプション解約             |
+| GET      | `/api/subscription/history`      | 必須 | 60回/分    | 決済履歴取得（ページネーション）   |
+| GET      | `/api/subscription/plans`        | 必須 | 60回/分    | アクティブプラン一覧取得           |
+| GET      | `/api/subscription/cards`        | 必須 | 60回/分    | 登録済みカード一覧取得             |
 | POST     | `/api/subscription/cards`        | 必須 | 3回/分     | カード登録                         |
-| DELETE   | `/api/subscription/cards/{card}` | 必須 | -          | カード削除                         |
+| DELETE   | `/api/subscription/cards/{card}` | 必須 | 5回/分     | カード削除                         |
 
 ---
 

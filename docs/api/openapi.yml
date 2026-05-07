@@ -103,7 +103,9 @@ paths:
       description: |
         メールアドレスとパスワードで認証する。
 
-        `device_name` を指定した場合、セッションの代わりに30日有効なBearerトークンが返される（モバイルアプリ等向け）。
+        `device_name` を指定した場合、セッションの代わりにBearerトークンが返される（モバイルアプリ等向け）。
+        トークンの有効期限は付与する abilities により最大30日（読み取り専用）／7日（書き込み権限を含む）。
+        既に同じ `device_name` のトークンが存在する場合、再ログイン時に古いトークンは破棄されローテーションされる。
       operationId: login
       x-rateLimit: 5/分
       requestBody:
@@ -129,6 +131,22 @@ paths:
                   maxLength: 255
                   description: 指定するとBearerトークンが発行される（省略時はセッション認証）
                   example: iPhone 15 Pro
+                abilities:
+                  type: array
+                  description: |
+                    `device_name` 指定時に要求するトークン abilities。
+                    許可される値: `subscription:read`, `subscription:write`, `card:read`, `card:write`。
+                    省略時は `subscription:read` のみ（最小権限）。サーバー側でホワイトリストフィルタされる。
+                  items:
+                    type: string
+                    enum:
+                      - subscription:read
+                      - subscription:write
+                      - card:read
+                      - card:write
+                  example:
+                    - subscription:read
+                    - card:read
       responses:
         '200':
           description: ログイン成功
@@ -143,6 +161,19 @@ paths:
                     type: string
                     description: device_name指定時のみ返却されるBearerトークン
                     example: 1|abc123def456...
+                  abilities:
+                    type: array
+                    description: device_name指定時のみ返却される、発行されたトークンに付与された abilities の配列
+                    items:
+                      type: string
+                    example:
+                      - subscription:read
+                      - card:read
+                  expires_at:
+                    type: string
+                    format: date-time
+                    description: device_name指定時のみ返却されるトークンの有効期限（ISO8601）
+                    example: '2026-06-01T12:00:00+09:00'
         '422':
           description: 認証失敗またはバリデーションエラー
           content:

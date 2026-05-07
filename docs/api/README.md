@@ -6,7 +6,7 @@ Japanese version: [README.ja.md](./README.ja.md)
 
 | File                         | Description                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------ |
-| [openapi.yml](./openapi.yml) | OpenAPI 3.0.3 specification for **this app's REST API** (13 endpoints in total)      |
+| [openapi.yml](./openapi.yml) | OpenAPI 3.0.3 specification for **this app's REST API** (14 endpoints in total)      |
 
 > **Important:** `openapi.yml` describes the API this app exposes to external clients.
 > The Fincode API is called only from the server side — never directly from the frontend.
@@ -64,17 +64,18 @@ Authorization: Bearer 1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | ------ | -------------------------------- | -------- | ---------- | -------------------------------------------- |
 | POST   | `/api/register`                  | None     | 5/min      | Register a user                              |
 | POST   | `/api/login`                     | None     | 5/min      | Log in                                       |
-| GET    | `/api/session-status`            | None     | -          | Check authentication state                   |
-| POST   | `/api/logout`                    | Required | -          | Log out                                      |
-| GET    | `/api/user`                      | Required | -          | Get the authenticated user                   |
-| GET    | `/api/subscription`              | Required | -          | Get the active subscription                  |
+| POST   | `/api/security/csp-reports`      | None     | 30/min     | Receive CSP violation reports                |
+| GET    | `/api/session-status`            | Required | 60/min     | Check authentication state                   |
+| POST   | `/api/logout`                    | Required | 60/min     | Log out                                      |
+| GET    | `/api/user`                      | Required | 60/min     | Get the authenticated user                   |
+| GET    | `/api/subscription`              | Required | 60/min     | Get the active subscription                  |
 | POST   | `/api/subscription`              | Required | 3/min      | Create a subscription                        |
-| DELETE | `/api/subscription`              | Required | -          | Cancel the subscription                      |
-| GET    | `/api/subscription/history`      | Required | -          | List billing history (paginated)             |
-| GET    | `/api/subscription/plans`        | Required | -          | List active plans                            |
-| GET    | `/api/subscription/cards`        | Required | -          | List registered cards                        |
+| DELETE | `/api/subscription`              | Required | 5/min      | Cancel the subscription                      |
+| GET    | `/api/subscription/history`      | Required | 60/min     | List billing history (paginated)             |
+| GET    | `/api/subscription/plans`        | Required | 60/min     | List active plans                            |
+| GET    | `/api/subscription/cards`        | Required | 60/min     | List registered cards                        |
 | POST   | `/api/subscription/cards`        | Required | 3/min      | Register a card                              |
-| DELETE | `/api/subscription/cards/{card}` | Required | -          | Delete a card                                |
+| DELETE | `/api/subscription/cards/{card}` | Required | 5/min      | Delete a card                                |
 
 ---
 
