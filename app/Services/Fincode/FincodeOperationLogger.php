@@ -15,6 +15,9 @@ class FincodeOperationLogger
      * 各 Manager で重複していた catch + Log::error + throw の三点セットを一箇所に集約し、
      * ログコンテキストの shape (exception_class / status_code) が揺れないようにする。
      *
+     * 呼び出し側が `exception_class` / `status_code` キーを渡しても helper 側の値で上書きされる
+     * （array_merge の右側優先）。ログ shape の一貫性を担保するため意図的にこの順序にしている。
+     *
      * @param  array<string, mixed>  $context  追加コンテキスト (user_id, subscription_id など)
      */
     public static function rethrowWithLog(string $message, array $context, FincodeApiException $e): never
