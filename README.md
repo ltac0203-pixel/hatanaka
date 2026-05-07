@@ -4,7 +4,7 @@ English / [日本語](./README.ja.md)
 
 **Reference implementation of a subscription management web application integrated with the Fincode payment API.**
 
-A sample project built with Laravel 12 + React 19 + Inertia.js + TypeScript that demonstrates how to implement subscription billing using [Fincode](https://www.fincode.jp/). Use it as a starting point for building recurring billing systems on Fincode.
+A sample project built with Laravel 13 + React 19 + Inertia.js + TypeScript that demonstrates how to implement subscription billing using [Fincode](https://www.fincode.jp/). Use it as a starting point for building recurring billing systems on Fincode.
 
 > Fincode is a Japanese payment gateway. This project is intended for developers building services on the Japanese market who want a working reference for Fincode integration.
 
@@ -32,7 +32,7 @@ A sample project built with Laravel 12 + React 19 + Inertia.js + TypeScript that
 
 ### Backend
 
-- **Framework**: Laravel 12
+- **Framework**: Laravel 13
 - **Authentication**: Laravel Breeze + Sanctum
 - **Database**: MySQL
 - **Payment gateway**: Fincode API

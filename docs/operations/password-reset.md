@@ -24,7 +24,7 @@ When building on top of this OSS, implement one of the following.
 
 ```bash
 php artisan make:migration create_password_reset_tokens_table
-# Reference the Laravel 11 default schema in
+# Reference the Laravel 13 default schema in
 # vendor/laravel/framework/src/Illuminate/Auth/Console/stubs
 ```
 
