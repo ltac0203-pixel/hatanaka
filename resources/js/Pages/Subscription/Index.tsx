@@ -3,9 +3,9 @@ import ActionLink from "@/Components/ActionLink";
 import ConfirmModal from "@/Components/ConfirmModal";
 import DangerButton from "@/Components/DangerButton";
 import TextMark from "@/Components/TextMark";
-import { Head, router } from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
 import { FincodeCard, Subscription } from "@/types/subscription";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { PageProps } from "@/types";
 import { t } from "@/i18n";
 import { appRoutes } from "@/utils/routes";
@@ -15,36 +15,10 @@ interface Props extends PageProps {
     cards: FincodeCard[];
 }
 
-type RequestErrors = Record<string, string | string[] | undefined>;
-
 const SUBSCRIPTION_CANCEL_ERROR =
     "サブスクリプションの解約に失敗しました。時間をおいて再試行してください。";
 const CARD_DELETE_ERROR =
     "カードの削除に失敗しました。時間をおいて再試行してください。";
-
-function extractRequestErrorMessage(
-    errors: RequestErrors,
-    fallbackMessage: string,
-) {
-    for (const value of Object.values(errors)) {
-        if (typeof value === "string" && value.trim() !== "") {
-            return value;
-        }
-
-        if (Array.isArray(value)) {
-            const message = value.find(
-                (item): item is string =>
-                    typeof item === "string" && item.trim() !== "",
-            );
-
-            if (message) {
-                return message;
-            }
-        }
-    }
-
-    return fallbackMessage;
-}
 
 const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -71,8 +45,7 @@ const statusBadge = (status: string) => {
 };
 
 export default function Index({ subscription, cards }: Props) {
-    const { dialogProps, open, close, setError, stopProcessing } =
-        useConfirmDialog();
+    const { dialogProps, confirmDelete } = useDeleteConfirm();
 
     return (
         <AuthenticatedLayout
@@ -137,7 +110,7 @@ export default function Index({ subscription, cards }: Props) {
                                 <div className="pt-4 border-t border-gray-200">
                                     <DangerButton
                                         onClick={() =>
-                                            open({
+                                            confirmDelete({
                                                 title: t(
                                                     "subscription.cancelDialog.title",
                                                 ),
@@ -147,28 +120,12 @@ export default function Index({ subscription, cards }: Props) {
                                                 confirmLabel: t(
                                                     "subscription.cancelDialog.confirmLabel",
                                                 ),
-                                                variant: "danger",
-                                                onConfirm: () => {
-                                                    router.delete(
-                                                        appRoutes.subscription.destroy(
-                                                            subscription.id,
-                                                        ),
-                                                        {
-                                                            preserveScroll: true,
-                                                            onSuccess: () =>
-                                                                close(),
-                                                            onError: (errors) =>
-                                                                setError(
-                                                                    extractRequestErrorMessage(
-                                                                        errors,
-                                                                        SUBSCRIPTION_CANCEL_ERROR,
-                                                                    ),
-                                                                ),
-                                                            onFinish: () =>
-                                                                stopProcessing(),
-                                                        },
-                                                    );
-                                                },
+                                                deleteUrl:
+                                                    appRoutes.subscription.destroy(
+                                                        subscription.id,
+                                                    ),
+                                                fallbackErrorMessage:
+                                                    SUBSCRIPTION_CANCEL_ERROR,
                                             })
                                         }
                                     >
@@ -236,7 +193,7 @@ export default function Index({ subscription, cards }: Props) {
                                     </div>
                                     <DangerButton
                                         onClick={() =>
-                                            open({
+                                            confirmDelete({
                                                 title: t(
                                                     "subscription.deleteCardDialog.title",
                                                 ),
@@ -246,28 +203,12 @@ export default function Index({ subscription, cards }: Props) {
                                                 confirmLabel: t(
                                                     "subscription.deleteCardDialog.confirmLabel",
                                                 ),
-                                                variant: "danger",
-                                                onConfirm: () => {
-                                                    router.delete(
-                                                        appRoutes.cards.destroy(
-                                                            card.id,
-                                                        ),
-                                                        {
-                                                            preserveScroll: true,
-                                                            onSuccess: () =>
-                                                                close(),
-                                                            onError: (errors) =>
-                                                                setError(
-                                                                    extractRequestErrorMessage(
-                                                                        errors,
-                                                                        CARD_DELETE_ERROR,
-                                                                    ),
-                                                                ),
-                                                            onFinish: () =>
-                                                                stopProcessing(),
-                                                        },
-                                                    );
-                                                },
+                                                deleteUrl:
+                                                    appRoutes.cards.destroy(
+                                                        card.id,
+                                                    ),
+                                                fallbackErrorMessage:
+                                                    CARD_DELETE_ERROR,
                                             })
                                         }
                                     >
