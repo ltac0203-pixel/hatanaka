@@ -138,8 +138,6 @@ class FincodeClient
 
         // 呼び出し側がヘッダー未指定でも共通認証ヘッダーを安全に追加できるようにする。
         $options['headers'] = $options['headers'] ?? [];
-
-        // すべての API 呼び出しで認証方式と利用バージョンを統一する。
         $options['headers']['Authorization'] = 'Bearer '.$this->apiKey;
         $options['headers']['Api-Version'] = $this->apiVersion;
 
@@ -157,7 +155,6 @@ class FincodeClient
         }
 
         $maxAttempts = $this->retryEnabled ? $this->retryMaxAttempts : 1;
-        $lastException = null;
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
@@ -176,61 +173,43 @@ class FincodeClient
 
                 return $body ?? [];
             } catch (GuzzleException $e) {
-                $lastException = $e;
-                $statusCode = 0;
-                $errorBody = [];
+                ['statusCode' => $statusCode, 'errorBody' => $errorBody] = $this->extractGuzzleErrorContext($e);
 
-                if ($e instanceof ConnectException) {
+                if ($e instanceof ConnectException || $statusCode >= 500) {
                     $this->circuitBreaker->recordFailure();
-                    if ($this->shouldRetry($attempt, $maxAttempts, 0)) {
-                        $this->applyDelay($attempt, null);
-
-                        continue;
-                    }
-                    $this->logError($method, $uri, 0, $e, []);
-
-                    throw new FincodeTimeoutException($e->getMessage());
                 }
 
-                if ($e instanceof RequestException && $e->hasResponse()) {
-                    $statusCode = $e->getResponse()->getStatusCode();
-                    $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true) ?? [];
+                if ($this->shouldRetry($attempt, $maxAttempts, $statusCode)) {
+                    $retryAfter = ($statusCode === 429 && $e instanceof RequestException)
+                        ? $this->parseRetryAfterHeader($e->getResponse())
+                        : null;
+                    $this->applyDelay($attempt, $retryAfter);
 
-                    if ($statusCode >= 500) {
-                        $this->circuitBreaker->recordFailure();
-                    }
-
-                    if ($this->shouldRetry($attempt, $maxAttempts, $statusCode)) {
-                        $retryAfter = $statusCode === 429
-                            ? $this->parseRetryAfterHeader($e->getResponse())
-                            : null;
-                        $this->applyDelay($attempt, $retryAfter);
-
-                        continue;
-                    }
+                    continue;
                 }
 
                 $this->logError($method, $uri, $statusCode, $e, $errorBody);
                 $this->classifyAndThrow($e, $statusCode, $errorBody);
             }
         }
+    }
 
-        if ($lastException !== null) {
-            $statusCode = 0;
-            $errorBody = [];
-
-            if ($lastException instanceof RequestException && $lastException->hasResponse()) {
-                $statusCode = $lastException->getResponse()->getStatusCode();
-                $errorBody = json_decode($lastException->getResponse()->getBody()->getContents(), true) ?? [];
-            }
-
-            $this->logError($method, $uri, $statusCode, $lastException, $errorBody);
-            $this->classifyAndThrow($lastException, $statusCode, $errorBody);
+    /**
+     * RequestException が応答を持つ場合のみ statusCode / errorBody を取り出す。
+     * ConnectException など応答を伴わないケースは (0, []) を返す。
+     *
+     * @return array{statusCode: int, errorBody: array}
+     */
+    private function extractGuzzleErrorContext(GuzzleException $e): array
+    {
+        if ($e instanceof RequestException && $e->hasResponse()) {
+            return [
+                'statusCode' => $e->getResponse()->getStatusCode(),
+                'errorBody' => json_decode($e->getResponse()->getBody()->getContents(), true) ?? [],
+            ];
         }
 
-        // @codeCoverageIgnoreStart
-        throw new FincodeApiException('リクエスト処理中に予期しないエラーが発生しました。');
-        // @codeCoverageIgnoreEnd
+        return ['statusCode' => 0, 'errorBody' => []];
     }
 
     private function shouldRetry(int $attempt, int $maxAttempts, int $statusCode): bool
