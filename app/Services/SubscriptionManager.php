@@ -14,6 +14,7 @@ use App\Exceptions\FincodeApiException;
 use App\Models\FincodeCard;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Fincode\FincodeOperationLogger;
 use App\Services\Fincode\FincodePayType;
 use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
@@ -93,13 +94,10 @@ class SubscriptionManager
                     'start_date' => Carbon::parse($startDate)->format('Y/m/d'),
                 ], $idempotencyKey);
             } catch (FincodeApiException $e) {
-                Log::error('Failed to create subscription on Fincode', [
+                FincodeOperationLogger::rethrowWithLog('Failed to create subscription on Fincode', [
                     'user_id' => $user->id,
                     'fincode_plan_id' => $planData['fincode_plan_id'],
-                    'exception_class' => $e::class,
-                    'status_code' => $e->getStatusCode(),
-                ]);
-                throw $e;
+                ], $e);
             }
 
             // 外部 API の日時形式差分を吸収し、DB 保存形式を安定させる。
@@ -236,12 +234,9 @@ class SubscriptionManager
                     $this->buildCancelIdempotencyKey($subscription->fincode_subscription_id)
                 );
             } catch (FincodeApiException $e) {
-                Log::error('Failed to cancel subscription on Fincode', [
+                FincodeOperationLogger::rethrowWithLog('Failed to cancel subscription on Fincode', [
                     'subscription_id' => $subscription->id,
-                    'exception_class' => $e::class,
-                    'status_code' => $e->getStatusCode(),
-                ]);
-                throw $e;
+                ], $e);
             }
 
             // 画面表示と内部判定が外部状態に追従するようローカルも更新する。

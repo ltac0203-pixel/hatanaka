@@ -12,9 +12,9 @@ use App\Models\FincodeCard;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\Fincode\CardService;
+use App\Services\Fincode\FincodeOperationLogger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CardManager
 {
@@ -69,12 +69,9 @@ class CardManager
                     $isDefault
                 );
             } catch (FincodeApiException $e) {
-                Log::error('Failed to create card on Fincode', [
+                FincodeOperationLogger::rethrowWithLog('Failed to create card on Fincode', [
                     'user_id' => $user->id,
-                    'exception_class' => $e::class,
-                    'status_code' => $e->getStatusCode(),
-                ]);
-                throw $e;
+                ], $e);
             }
 
             // Fincode の card レスポンスは expire を YYMM (年下2桁 + 月) 形式の 4 桁文字列で返す。
@@ -157,12 +154,9 @@ class CardManager
                     $card->fincode_card_id
                 );
             } catch (FincodeApiException $e) {
-                Log::error('Failed to delete card on Fincode', [
+                FincodeOperationLogger::rethrowWithLog('Failed to delete card on Fincode', [
                     'card_id' => $card->id,
-                    'exception_class' => $e::class,
-                    'status_code' => $e->getStatusCode(),
-                ]);
-                throw $e;
+                ], $e);
             }
 
             // 既定カードが空になると次回決済で選択不能になるため、最古の残カードを補充する。
