@@ -9,41 +9,59 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { PageProps } from "@/types";
 import { t } from "@/i18n";
 import { appRoutes } from "@/utils/routes";
+import { extractRequestErrorMessage } from "@/utils/extractRequestErrorMessage";
 
 interface Props extends PageProps {
     subscription: Subscription | null;
     cards: FincodeCard[];
 }
 
-type RequestErrors = Record<string, string | string[] | undefined>;
-
 const SUBSCRIPTION_CANCEL_ERROR =
     "サブスクリプションの解約に失敗しました。時間をおいて再試行してください。";
 const CARD_DELETE_ERROR =
     "カードの削除に失敗しました。時間をおいて再試行してください。";
 
-function extractRequestErrorMessage(
-    errors: RequestErrors,
-    fallbackMessage: string,
-) {
-    for (const value of Object.values(errors)) {
-        if (typeof value === "string" && value.trim() !== "") {
-            return value;
-        }
+interface BuildDeleteConfirmArgs {
+    dialogText: {
+        title: string;
+        message: string;
+        confirmLabel: string;
+    };
+    deleteUrl: string;
+    fallbackErrorMessage: string;
+    dialogActions: {
+        close: () => void;
+        setError: (message: string | null) => void;
+        stopProcessing: () => void;
+    };
+}
 
-        if (Array.isArray(value)) {
-            const message = value.find(
-                (item): item is string =>
-                    typeof item === "string" && item.trim() !== "",
-            );
-
-            if (message) {
-                return message;
-            }
-        }
-    }
-
-    return fallbackMessage;
+function buildDeleteConfirm({
+    dialogText,
+    deleteUrl,
+    fallbackErrorMessage,
+    dialogActions,
+}: BuildDeleteConfirmArgs) {
+    return {
+        title: dialogText.title,
+        message: dialogText.message,
+        confirmLabel: dialogText.confirmLabel,
+        variant: "danger" as const,
+        onConfirm: () => {
+            router.delete(deleteUrl, {
+                preserveScroll: true,
+                onSuccess: () => dialogActions.close(),
+                onError: (errors) =>
+                    dialogActions.setError(
+                        extractRequestErrorMessage(
+                            errors,
+                            fallbackErrorMessage,
+                        ),
+                    ),
+                onFinish: () => dialogActions.stopProcessing(),
+            });
+        },
+    };
 }
 
 const statusBadge = (status: string) => {
@@ -137,39 +155,32 @@ export default function Index({ subscription, cards }: Props) {
                                 <div className="pt-4 border-t border-gray-200">
                                     <DangerButton
                                         onClick={() =>
-                                            open({
-                                                title: t(
-                                                    "subscription.cancelDialog.title",
-                                                ),
-                                                message: t(
-                                                    "subscription.cancelDialog.message",
-                                                ),
-                                                confirmLabel: t(
-                                                    "subscription.cancelDialog.confirmLabel",
-                                                ),
-                                                variant: "danger",
-                                                onConfirm: () => {
-                                                    router.delete(
+                                            open(
+                                                buildDeleteConfirm({
+                                                    dialogText: {
+                                                        title: t(
+                                                            "subscription.cancelDialog.title",
+                                                        ),
+                                                        message: t(
+                                                            "subscription.cancelDialog.message",
+                                                        ),
+                                                        confirmLabel: t(
+                                                            "subscription.cancelDialog.confirmLabel",
+                                                        ),
+                                                    },
+                                                    deleteUrl:
                                                         appRoutes.subscription.destroy(
                                                             subscription.id,
                                                         ),
-                                                        {
-                                                            preserveScroll: true,
-                                                            onSuccess: () =>
-                                                                close(),
-                                                            onError: (errors) =>
-                                                                setError(
-                                                                    extractRequestErrorMessage(
-                                                                        errors,
-                                                                        SUBSCRIPTION_CANCEL_ERROR,
-                                                                    ),
-                                                                ),
-                                                            onFinish: () =>
-                                                                stopProcessing(),
-                                                        },
-                                                    );
-                                                },
-                                            })
+                                                    fallbackErrorMessage:
+                                                        SUBSCRIPTION_CANCEL_ERROR,
+                                                    dialogActions: {
+                                                        close,
+                                                        setError,
+                                                        stopProcessing,
+                                                    },
+                                                }),
+                                            )
                                         }
                                     >
                                         {t("subscription.cancelButton")}
@@ -236,39 +247,32 @@ export default function Index({ subscription, cards }: Props) {
                                     </div>
                                     <DangerButton
                                         onClick={() =>
-                                            open({
-                                                title: t(
-                                                    "subscription.deleteCardDialog.title",
-                                                ),
-                                                message: t(
-                                                    "subscription.deleteCardDialog.message",
-                                                ),
-                                                confirmLabel: t(
-                                                    "subscription.deleteCardDialog.confirmLabel",
-                                                ),
-                                                variant: "danger",
-                                                onConfirm: () => {
-                                                    router.delete(
+                                            open(
+                                                buildDeleteConfirm({
+                                                    dialogText: {
+                                                        title: t(
+                                                            "subscription.deleteCardDialog.title",
+                                                        ),
+                                                        message: t(
+                                                            "subscription.deleteCardDialog.message",
+                                                        ),
+                                                        confirmLabel: t(
+                                                            "subscription.deleteCardDialog.confirmLabel",
+                                                        ),
+                                                    },
+                                                    deleteUrl:
                                                         appRoutes.cards.destroy(
                                                             card.id,
                                                         ),
-                                                        {
-                                                            preserveScroll: true,
-                                                            onSuccess: () =>
-                                                                close(),
-                                                            onError: (errors) =>
-                                                                setError(
-                                                                    extractRequestErrorMessage(
-                                                                        errors,
-                                                                        CARD_DELETE_ERROR,
-                                                                    ),
-                                                                ),
-                                                            onFinish: () =>
-                                                                stopProcessing(),
-                                                        },
-                                                    );
-                                                },
-                                            })
+                                                    fallbackErrorMessage:
+                                                        CARD_DELETE_ERROR,
+                                                    dialogActions: {
+                                                        close,
+                                                        setError,
+                                                        stopProcessing,
+                                                    },
+                                                }),
+                                            )
                                         }
                                     >
                                         {t("common.delete")}
