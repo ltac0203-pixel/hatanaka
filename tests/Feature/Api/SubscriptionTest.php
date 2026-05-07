@@ -122,7 +122,7 @@ class SubscriptionTest extends TestCase
             ->with(
                 Mockery::on(fn ($u) => $u->id === $user->id),
                 $plan['fincode_plan_id'],
-                Mockery::on(fn ($c) => $c->id === $card->id),
+                $card->id,
                 $startDate
             )
             ->andReturn($mockSubscription);

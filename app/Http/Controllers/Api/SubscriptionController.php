@@ -18,7 +18,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private SubscriptionManager $subscriptionManager
+        private readonly SubscriptionManager $subscriptionManager,
     ) {}
 
     public function show(Request $request): JsonResponse
@@ -41,7 +41,7 @@ class SubscriptionController extends Controller
         $subscription = $this->subscriptionManager->createForPlan(
             $request->user(),
             $validated['fincode_plan_id'],
-            $request->getValidatedCard(),
+            (int) $validated['card_id'],
             $validated['start_date']
         );
 

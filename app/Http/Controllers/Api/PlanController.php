@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class PlanController extends Controller
 {
     public function __construct(
-        private PlanService $planService
+        private readonly PlanService $planService,
     ) {}
 
     public function index(): AnonymousResourceCollection

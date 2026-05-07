@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Fincode;
 
-class SubscriptionService
+final class SubscriptionService
 {
-    public function __construct(private FincodeClient $client) {}
+    public function __construct(private readonly FincodeClient $client) {}
 
     public function create(array $data, ?string $idempotencyKey = null): array
     {

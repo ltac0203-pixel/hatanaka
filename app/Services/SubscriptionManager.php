@@ -16,6 +16,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\Fincode\FincodeOperationLogger;
 use App\Services\Fincode\FincodePayType;
+use App\Services\Fincode\IdempotencyKey;
 use App\Services\Fincode\PlanService;
 use App\Services\Fincode\SubscriptionService as FincodeSubscriptionService;
 use Carbon\Carbon;
@@ -23,40 +24,31 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class SubscriptionManager
+final class SubscriptionManager
 {
     private const ACTIVE_SUBSCRIPTION_UNIQUE_INDEX = 'subscriptions_active_user_id_unique';
 
-    protected FincodeSubscriptionService $subscriptionService;
-
-    /**
-     * 契約前に顧客同期の前提を満たすために利用する。
-     */
-    protected CustomerSyncService $customerSyncService;
-
-    /**
-     * 現在のリクエスト由来コンテキストを監査イベントへ固定する。
-     */
-    protected RequestContextResolver $requestContextResolver;
-
     public function __construct(
-        FincodeSubscriptionService $subscriptionService,
-        CustomerSyncService $customerSyncService,
-        RequestContextResolver $requestContextResolver,
-        private PlanService $planService
-    ) {
-        $this->subscriptionService = $subscriptionService;
-        $this->customerSyncService = $customerSyncService;
-        $this->requestContextResolver = $requestContextResolver;
-    }
+        private readonly FincodeSubscriptionService $subscriptionService,
+        private readonly CustomerSyncService $customerSyncService,
+        private readonly RequestContextResolver $requestContextResolver,
+        private readonly PlanService $planService,
+    ) {}
 
     /**
-     * Plan ID から契約可能性を確認した上で契約を作成する。
-     * Web/API いずれの Controller も Plan 解決を Service 層に委ね、二重実装を避ける。
+     * Plan ID とカード ID から契約可能性を確認した上で契約を作成する。
+     * Plan 解決・カード所有権確認・期限切れ判定を Service 層に集約し、
+     * FormRequest が業務不変条件を持つ責務漏れを防ぐ。
      */
-    public function createForPlan(User $user, string $fincodePlanId, FincodeCard $card, string $startDate): Subscription
+    public function createForPlan(User $user, string $fincodePlanId, int $cardId, string $startDate): Subscription
     {
         $planData = $this->planService->findActivePlanOrFail($fincodePlanId);
+
+        $card = $user->fincodeCards()->find($cardId);
+        if (! $card instanceof FincodeCard) {
+            // FormRequest 側の Rule::exists で原則弾けるが、レース時の安全網として 422 系例外を再度投げる。
+            throw new ExpiredCardException('このカードは使用できません。');
+        }
 
         return $this->create($user, $planData, $card, $startDate);
     }
@@ -75,12 +67,12 @@ class SubscriptionManager
 
             // 顧客未作成のまま契約作成が走る不整合を防ぐため先に同期する。
             $customer = $this->customerSyncService->ensureCustomerExists($user);
-            $idempotencyKey = $this->buildCreateIdempotencyKey(
-                $user,
+            $idempotencyKey = IdempotencyKey::for('subscription.create', [
+                $user->id,
                 (string) $planData['fincode_plan_id'],
-                $card,
-                $startDate
-            );
+                $card->fincode_card_id,
+                $startDate,
+            ]);
 
             // 外部契約作成が失敗した場合にローカルだけ登録される状態を防ぐ。
             try {
@@ -192,21 +184,6 @@ class SubscriptionManager
         return str_contains($e->getMessage(), self::ACTIVE_SUBSCRIPTION_UNIQUE_INDEX);
     }
 
-    private function buildCreateIdempotencyKey(User $user, string $planId, FincodeCard $card, string $startDate): string
-    {
-        return 'subscription:create:'.hash('sha256', implode('|', [
-            (string) $user->id,
-            $planId,
-            $card->fincode_card_id,
-            $startDate,
-        ]));
-    }
-
-    private function buildCancelIdempotencyKey(string $subscriptionId): string
-    {
-        return 'subscription:cancel:'.hash('sha256', $subscriptionId);
-    }
-
     private function parseFincodeDate(?string $value): ?string
     {
         if ($value === null) {
@@ -231,7 +208,7 @@ class SubscriptionManager
             try {
                 $this->subscriptionService->cancel(
                     $subscription->fincode_subscription_id,
-                    $this->buildCancelIdempotencyKey($subscription->fincode_subscription_id)
+                    IdempotencyKey::for('subscription.cancel', [$subscription->fincode_subscription_id])
                 );
             } catch (FincodeApiException $e) {
                 FincodeOperationLogger::rethrowWithLog('Failed to cancel subscription on Fincode', [
@@ -271,6 +248,31 @@ class SubscriptionManager
                 event($subscriptionCanceled);
                 event($statusChanged);
             });
+        });
+    }
+
+    /**
+     * 退会フローの一部として、ユーザーのアクティブ契約を全て解約した上で User を soft delete する。
+     * Controller から transaction とロックの責務を引き取り、不変条件 (退会前に外部課金を止める) を Service 内で完結させる。
+     */
+    public function cancelAllForUserAndDelete(User $user): void
+    {
+        DB::transaction(function () use ($user): void {
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedUser->subscriptions()
+                ->active()
+                ->without('card')
+                ->lockForUpdate()
+                ->get()
+                ->each(function (Subscription $subscription) use ($lockedUser): void {
+                    $this->cancel($subscription, $lockedUser);
+                });
+
+            $lockedUser->delete();
         });
     }
 }

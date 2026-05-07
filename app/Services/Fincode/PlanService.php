@@ -8,7 +8,7 @@ use App\Exceptions\FincodeApiException;
 use App\Exceptions\PlanUnavailableException;
 use Illuminate\Support\Facades\Cache;
 
-class PlanService
+final class PlanService
 {
     /**
      * プラン情報を保持する標準キャッシュ TTL (秒)。
@@ -24,8 +24,8 @@ class PlanService
     private const PLAN_NOT_FOUND_CACHE_TTL_SECONDS = 60;
 
     public function __construct(
-        private FincodeClient $client,
-        private PlanNormalizer $normalizer
+        private readonly FincodeClient $client,
+        private readonly PlanNormalizer $normalizer,
     ) {}
 
     /**

@@ -8,10 +8,10 @@ use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
-class AuditLogger
+final class AuditLogger
 {
     public function __construct(
-        private RequestContextResolver $requestContextResolver
+        private readonly RequestContextResolver $requestContextResolver,
     ) {}
 
     /**
