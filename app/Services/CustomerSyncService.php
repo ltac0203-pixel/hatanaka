@@ -9,6 +9,7 @@ use App\Exceptions\FincodeApiException;
 use App\Models\FincodeCustomer;
 use App\Models\User;
 use App\Services\Fincode\CustomerService;
+use App\Services\Fincode\FincodeOperationLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -66,12 +67,9 @@ class CustomerSyncService
                 'email' => $user->email,
             ]);
         } catch (FincodeApiException $e) {
-            Log::error('Failed to create customer on Fincode', [
+            FincodeOperationLogger::rethrowWithLog('Failed to create customer on Fincode', [
                 'user_id' => $user->id,
-                'exception_class' => $e::class,
-                'status_code' => $e->getStatusCode(),
-            ]);
-            throw $e;
+            ], $e);
         }
 
         // 後続のカード・契約処理で再利用できるようローカルへ保存する。
@@ -125,12 +123,9 @@ class CustomerSyncService
         try {
             $response = $this->customerService->getCustomer($customer->fincode_customer_id);
         } catch (FincodeApiException $e) {
-            Log::error('Failed to sync customer from Fincode', [
+            FincodeOperationLogger::rethrowWithLog('Failed to sync customer from Fincode', [
                 'fincode_customer_id' => $customer->fincode_customer_id,
-                'exception_class' => $e::class,
-                'status_code' => $e->getStatusCode(),
-            ]);
-            throw $e;
+            ], $e);
         }
 
         DB::transaction(function () use ($customer, $response) {
