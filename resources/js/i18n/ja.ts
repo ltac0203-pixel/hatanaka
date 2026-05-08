@@ -179,6 +179,12 @@ export const ja = {
             message: "本当にカードを削除しますか？",
             confirmLabel: "削除する",
         },
+        errors: {
+            cancelFailed:
+                "サブスクリプションの解約に失敗しました。時間をおいて再試行してください。",
+            cardDeleteFailed:
+                "カードの削除に失敗しました。時間をおいて再試行してください。",
+        },
     },
     card: {
         registerTitle: "カード登録",
@@ -250,6 +256,14 @@ export const ja = {
         errorPayloadFailed:
             "カード情報の取得に失敗しました。入力内容を確認してください。",
         errorTokenFailed: "トークンの取得に失敗しました。",
+    },
+    errorBoundary: {
+        badge: "アプリケーションエラー",
+        title: "エラーが発生しました",
+        description:
+            "予期しないエラーが発生しました。ページを再読み込みするか、トップへ戻ってください。",
+        reloadButton: "再読み込み",
+        homeButton: "トップへ戻る",
     },
     fincodeSdk: {
         errorInvalidDomain:

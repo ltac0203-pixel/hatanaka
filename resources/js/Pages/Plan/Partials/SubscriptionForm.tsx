@@ -9,6 +9,10 @@ import { FincodeCard, Plan } from "@/types/subscription";
 import { FormEventHandler, useState } from "react";
 import { t } from "@/i18n";
 import { appRoutes } from "@/utils/routes";
+import {
+    extractRequestErrorMessage,
+    type RequestErrors,
+} from "@/utils/extractRequestErrorMessage";
 
 interface SubscriptionFormProps {
     plan: Plan;
@@ -16,34 +20,10 @@ interface SubscriptionFormProps {
     minimumStartDate: string;
 }
 
-type RequestErrors = Record<string, string | string[] | undefined>;
-
-const inlineErrorKeys = new Set(["card_id", "start_date"]);
-
-function extractSubmissionError(errors: RequestErrors): string | null {
-    for (const [key, value] of Object.entries(errors)) {
-        if (inlineErrorKeys.has(key)) {
-            continue;
-        }
-
-        if (typeof value === "string" && value.trim() !== "") {
-            return value;
-        }
-
-        if (Array.isArray(value)) {
-            const message = value.find(
-                (item): item is string =>
-                    typeof item === "string" && item.trim() !== "",
-            );
-
-            if (message) {
-                return message;
-            }
-        }
-    }
-
-    return null;
-}
+const INLINE_ERROR_KEYS: ReadonlySet<string> = new Set([
+    "card_id",
+    "start_date",
+]);
 
 export default function SubscriptionForm({
     plan,
@@ -71,7 +51,11 @@ export default function SubscriptionForm({
         post(appRoutes.subscription.store(), {
             onError: (formErrors) =>
                 setSubmissionError(
-                    extractSubmissionError(formErrors as RequestErrors),
+                    extractRequestErrorMessage(
+                        formErrors as RequestErrors,
+                        null,
+                        { skipKeys: INLINE_ERROR_KEYS },
+                    ),
                 ),
             onFinish: () => setIsSubmitting(false),
         });
