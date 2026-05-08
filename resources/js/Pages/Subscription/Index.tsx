@@ -19,29 +19,29 @@ interface Props extends PageProps {
     cards: FincodeCard[];
 }
 
-const statusBadge = (status: SubscriptionStatus) => {
-    const styles: Record<SubscriptionStatus, string> = {
-        active: "bg-black text-white border-black",
-        canceled: "bg-gray-50 text-gray-600 border-gray-200",
-        expired: "bg-gray-100 text-gray-500 border-gray-300",
-        unpaid: "bg-red-50 text-red-700 border-red-200",
-        incomplete: "bg-gray-100 text-gray-500 border-gray-300",
-    };
-    const labels: Record<SubscriptionStatus, string> = {
-        active: t("subscription.statusLabels.active"),
-        canceled: t("subscription.statusLabels.canceled"),
-        expired: t("subscription.statusLabels.expired"),
-        unpaid: t("subscription.statusLabels.unpaid"),
-        incomplete: t("subscription.statusLabels.incomplete"),
-    };
-    return (
-        <span
-            className={`inline-flex items-center border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${styles[status]}`}
-        >
-            {labels[status]}
-        </span>
-    );
+const STATUS_BADGE_STYLES: Record<SubscriptionStatus, string> = {
+    active: "bg-black text-white border-black",
+    canceled: "bg-gray-50 text-gray-600 border-gray-200",
+    expired: "bg-gray-100 text-gray-500 border-gray-300",
+    unpaid: "bg-red-50 text-red-700 border-red-200",
+    incomplete: "bg-gray-100 text-gray-500 border-gray-300",
 };
+
+const STATUS_BADGE_LABELS: Record<SubscriptionStatus, string> = {
+    active: t("subscription.statusLabels.active"),
+    canceled: t("subscription.statusLabels.canceled"),
+    expired: t("subscription.statusLabels.expired"),
+    unpaid: t("subscription.statusLabels.unpaid"),
+    incomplete: t("subscription.statusLabels.incomplete"),
+};
+
+const statusBadge = (status: SubscriptionStatus) => (
+    <span
+        className={`inline-flex items-center border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${STATUS_BADGE_STYLES[status]}`}
+    >
+        {STATUS_BADGE_LABELS[status]}
+    </span>
+);
 
 export default function Index({ subscription, cards }: Props) {
     const { dialogProps, confirmDelete } = useDeleteConfirm();
