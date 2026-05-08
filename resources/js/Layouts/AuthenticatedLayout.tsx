@@ -14,7 +14,12 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user!;
+    const user = usePage().props.auth.user;
+    if (!user) {
+        throw new Error(
+            "AuthenticatedLayout requires an authenticated user (auth.user is null).",
+        );
+    }
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const flashProps = useFlashMessage();
     const navMarkClass = "h-5 w-5 text-[10px]";
