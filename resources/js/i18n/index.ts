@@ -21,10 +21,18 @@ type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}`
       ? T[P]
       : never;
 
+// PathValue が string になるキーだけを抽出する。`<button>{t("foo")}</button>` で
+// 誤って枝キーを渡した場合に string 以外の値（object 等）が描画されるのを防ぐ。
+export type StringTranslationKey = {
+    [K in TranslationKey]: PathValue<typeof ja, K> extends string ? K : never;
+}[TranslationKey];
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
 
+export function t<K extends StringTranslationKey>(key: K): string;
+export function t<K extends TranslationKey>(key: K): PathValue<typeof ja, K>;
 export function t<K extends TranslationKey>(key: K): PathValue<typeof ja, K> {
     const parts = key.split(".");
     let result: unknown = ja;
