@@ -1,4 +1,5 @@
 import ErrorScreen from "@/Components/ErrorScreen";
+import { t } from "@/i18n";
 import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
@@ -62,9 +63,9 @@ export default class ErrorBoundary extends Component<Props, State> {
 
             return (
                 <ErrorScreen
-                    badge="アプリケーションエラー"
-                    title="エラーが発生しました"
-                    description="予期しないエラーが発生しました。ページを再読み込みするか、トップへ戻ってください。"
+                    badge={t("errorBoundary.badge")}
+                    title={t("errorBoundary.title")}
+                    description={t("errorBoundary.description")}
                     actions={
                         <>
                             <button
@@ -72,13 +73,13 @@ export default class ErrorBoundary extends Component<Props, State> {
                                 onClick={() => window.location.reload()}
                                 className="app-dark-cta-solid px-5 py-2 text-sm font-semibold"
                             >
-                                再読み込み
+                                {t("errorBoundary.reloadButton")}
                             </button>
                             <a
                                 href="/"
                                 className="app-dark-cta-ghost px-5 py-2 text-sm font-semibold"
                             >
-                                トップへ戻る
+                                {t("errorBoundary.homeButton")}
                             </a>
                         </>
                     }

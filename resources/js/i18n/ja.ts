@@ -257,6 +257,14 @@ export const ja = {
             "カード情報の取得に失敗しました。入力内容を確認してください。",
         errorTokenFailed: "トークンの取得に失敗しました。",
     },
+    errorBoundary: {
+        badge: "アプリケーションエラー",
+        title: "エラーが発生しました",
+        description:
+            "予期しないエラーが発生しました。ページを再読み込みするか、トップへ戻ってください。",
+        reloadButton: "再読み込み",
+        homeButton: "トップへ戻る",
+    },
     fincodeSdk: {
         errorInvalidDomain:
             "決済SDKのURLが許可されていないドメインです。運用管理者にお問い合わせください。",
