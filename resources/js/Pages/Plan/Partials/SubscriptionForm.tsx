@@ -16,7 +16,7 @@ import {
 
 interface SubscriptionFormProps {
     plan: Plan;
-    cards: FincodeCard[];
+    cards: readonly [FincodeCard, ...FincodeCard[]];
     minimumStartDate: string;
 }
 
@@ -30,7 +30,7 @@ export default function SubscriptionForm({
     cards,
     minimumStartDate,
 }: SubscriptionFormProps) {
-    // This form is only rendered when at least one saved card is available.
+    // 親側で空配列が排除されているため、型レベルで cards[0] のアクセス安全性を保証している。
     const initialCardId =
         cards.find((card) => card.is_default)?.id ?? cards[0].id;
 

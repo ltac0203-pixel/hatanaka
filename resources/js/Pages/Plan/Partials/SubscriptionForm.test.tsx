@@ -59,7 +59,7 @@ describe("SubscriptionForm", () => {
         interval_label: "月",
     };
 
-    const cards: FincodeCard[] = [
+    const cards: readonly [FincodeCard, ...FincodeCard[]] = [
         {
             id: 1,
             brand: "Visa",

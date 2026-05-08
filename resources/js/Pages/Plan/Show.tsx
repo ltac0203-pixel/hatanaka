@@ -15,6 +15,12 @@ interface Props extends PageProps {
     minimumStartDate: string;
 }
 
+function hasAtLeastOneCard(
+    cards: readonly FincodeCard[],
+): cards is readonly [FincodeCard, ...FincodeCard[]] {
+    return cards.length > 0;
+}
+
 export default function Show({
     plan,
     cards,
@@ -62,7 +68,7 @@ export default function Show({
                                 {t("plan.goToSubscription")}
                             </ActionLink>
                         </div>
-                    ) : cards.length > 0 ? (
+                    ) : hasAtLeastOneCard(cards) ? (
                         <SubscriptionForm
                             plan={plan}
                             cards={cards}
