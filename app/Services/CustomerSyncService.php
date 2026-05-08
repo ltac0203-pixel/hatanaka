@@ -14,7 +14,7 @@ use App\Services\Fincode\IdempotencyKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-final class CustomerSyncService
+class CustomerSyncService
 {
     public function __construct(
         private readonly CustomerService $customerService,

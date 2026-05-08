@@ -17,7 +17,7 @@ use App\Services\Fincode\IdempotencyKey;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
-final class CardManager
+class CardManager
 {
     public function __construct(
         private readonly CardService $cardService,

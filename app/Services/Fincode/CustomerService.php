@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Fincode;
 
-final class CustomerService
+class CustomerService
 {
     public function __construct(private readonly FincodeClient $client) {}
 

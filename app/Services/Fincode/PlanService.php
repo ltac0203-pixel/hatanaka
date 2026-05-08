@@ -8,7 +8,7 @@ use App\Exceptions\FincodeApiException;
 use App\Exceptions\PlanUnavailableException;
 use Illuminate\Support\Facades\Cache;
 
-final class PlanService
+class PlanService
 {
     /**
      * プラン情報を保持する標準キャッシュ TTL (秒)。

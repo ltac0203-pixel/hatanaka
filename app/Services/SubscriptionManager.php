@@ -24,7 +24,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-final class SubscriptionManager
+class SubscriptionManager
 {
     private const ACTIVE_SUBSCRIPTION_UNIQUE_INDEX = 'subscriptions_active_user_id_unique';
 
