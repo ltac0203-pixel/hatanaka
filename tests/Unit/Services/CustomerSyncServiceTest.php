@@ -70,7 +70,7 @@ class CustomerSyncServiceTest extends TestCase
 
         $this->mockCustomerService->shouldReceive('create')
             ->once()
-            ->with(['name' => $user->name, 'email' => $user->email])
+            ->with(['name' => $user->name, 'email' => $user->email], Mockery::type('string'))
             ->andReturn([
                 'id' => 'cus_new',
                 'name' => $user->name,
@@ -97,7 +97,7 @@ class CustomerSyncServiceTest extends TestCase
 
         $this->mockCustomerService->shouldReceive('create')
             ->once()
-            ->with(['name' => $user->name, 'email' => $user->email])
+            ->with(['name' => $user->name, 'email' => $user->email], Mockery::type('string'))
             ->andReturn([
                 'id' => 'cus_api_call',
                 'name' => $user->name,
@@ -214,7 +214,7 @@ class CustomerSyncServiceTest extends TestCase
         // createCustomer 経由で顧客を作成
         $this->mockCustomerService->shouldReceive('create')
             ->once()
-            ->with(['name' => $user->name, 'email' => $user->email])
+            ->with(['name' => $user->name, 'email' => $user->email], Mockery::type('string'))
             ->andReturn([
                 'id' => 'cus_first',
                 'name' => $user->name,

@@ -91,7 +91,7 @@ class CardManagerTest extends TestCase
 
         $this->mockCardService->shouldReceive('create')
             ->once()
-            ->with('cus_test_123', 'tok_test', true)
+            ->with('cus_test_123', 'tok_test', true, Mockery::type('string'))
             ->andReturn($this->fincodeCardResponse());
 
         $card = $this->cardManager->create($user, 'tok_test', false);
@@ -116,7 +116,7 @@ class CardManagerTest extends TestCase
 
         $this->mockCardService->shouldReceive('create')
             ->once()
-            ->with('cus_test_123', 'tok_loaded_empty', true)
+            ->with('cus_test_123', 'tok_loaded_empty', true, Mockery::type('string'))
             ->andReturn($this->fincodeCardResponse(['id' => 'card_loaded_empty']));
 
         DB::flushQueryLog();
@@ -165,7 +165,7 @@ class CardManagerTest extends TestCase
 
         $this->mockCardService->shouldReceive('create')
             ->once()
-            ->with('cus_test_123', 'tok_loaded_existing', false)
+            ->with('cus_test_123', 'tok_loaded_existing', false, Mockery::type('string'))
             ->andReturn($this->fincodeCardResponse(['id' => 'card_loaded_new']));
 
         DB::flushQueryLog();
@@ -211,7 +211,7 @@ class CardManagerTest extends TestCase
 
         $this->mockCardService->shouldReceive('create')
             ->once()
-            ->with('cus_test_123', 'tok_new', true)
+            ->with('cus_test_123', 'tok_new', true, Mockery::type('string'))
             ->andReturn($this->fincodeCardResponse(['id' => 'card_new']));
 
         $newCard = $this->cardManager->create($user, 'tok_new', true);
@@ -234,7 +234,7 @@ class CardManagerTest extends TestCase
 
         $this->mockCardService->shouldReceive('create')
             ->once()
-            ->with('cus_test_123', 'tok_api_test', true)
+            ->with('cus_test_123', 'tok_api_test', true, Mockery::type('string'))
             ->andReturn($this->fincodeCardResponse());
 
         $this->cardManager->create($user, 'tok_api_test');
@@ -353,7 +353,7 @@ class CardManagerTest extends TestCase
 
         $this->mockCardService->shouldReceive('deleteCard')
             ->once()
-            ->with('cus_test_123', 'card_del_api');
+            ->with('cus_test_123', 'card_del_api', Mockery::type('string'));
 
         $this->cardManager->delete($card);
 
