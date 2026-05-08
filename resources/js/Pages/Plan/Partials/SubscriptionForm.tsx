@@ -39,13 +39,10 @@ export default function SubscriptionForm({
         card_id: initialCardId,
         start_date: minimumStartDate,
     });
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionError, setSubmissionError] = useState<string | null>(null);
-    const isProcessing = processing || isSubmitting;
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
         setSubmissionError(null);
 
         post(appRoutes.subscription.store(), {
@@ -57,7 +54,6 @@ export default function SubscriptionForm({
                         { skipKeys: INLINE_ERROR_KEYS },
                     ),
                 ),
-            onFinish: () => setIsSubmitting(false),
         });
     };
 
@@ -119,7 +115,7 @@ export default function SubscriptionForm({
                 >
                     {t("subscriptionForm.backToPlans")}
                 </ActionLink>
-                <PrimaryButton disabled={isProcessing}>
+                <PrimaryButton disabled={processing}>
                     {t("subscriptionForm.registerButton")}
                 </PrimaryButton>
             </div>
