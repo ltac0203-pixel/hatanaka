@@ -31,7 +31,14 @@ export function t<K extends TranslationKey>(key: K): PathValue<typeof ja, K> {
 
     for (const part of parts) {
         if (!isRecord(result) || !(part in result)) {
-            throw new Error(`Translation key resolution failed: ${key}`);
+            // dev では即座に気付けるよう例外を投げ、prod ではキー文字列にフォールバックして
+            // ja.ts の構造変更が起きても画面全体が真っ白にならないようにする。
+            const message = `Translation key resolution failed: ${key}`;
+            if (import.meta.env.DEV) {
+                throw new Error(message);
+            }
+            console.error(message);
+            return key as PathValue<typeof ja, K>;
         }
 
         result = result[part];
