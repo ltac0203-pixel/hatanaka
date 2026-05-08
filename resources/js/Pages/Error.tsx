@@ -8,7 +8,17 @@ interface ErrorPageProps extends PageProps {
     status: number;
 }
 
-const errorContents: Record<number, { title: string; description: string }> = {
+interface ErrorContent {
+    title: string;
+    description: string;
+}
+
+const defaultErrorContent: ErrorContent = {
+    title: t("error.serverError.title"),
+    description: t("error.serverError.description"),
+};
+
+const errorContents: Record<number, ErrorContent> = {
     403: {
         title: t("error.forbidden.title"),
         description: t("error.forbidden.description"),
@@ -21,10 +31,7 @@ const errorContents: Record<number, { title: string; description: string }> = {
         title: t("error.rateLimit.title"),
         description: t("error.rateLimit.description"),
     },
-    500: {
-        title: t("error.serverError.title"),
-        description: t("error.serverError.description"),
-    },
+    500: defaultErrorContent,
     503: {
         title: t("error.unavailable.title"),
         description: t("error.unavailable.description"),
@@ -36,7 +43,7 @@ const errorContents: Record<number, { title: string; description: string }> = {
 };
 
 export default function Error({ status }: ErrorPageProps) {
-    const content = errorContents[status] ?? errorContents[500];
+    const content = errorContents[status] ?? defaultErrorContent;
 
     return (
         <>

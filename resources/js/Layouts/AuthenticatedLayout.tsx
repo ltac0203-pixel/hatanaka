@@ -6,45 +6,72 @@ import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import TextMark from "@/Components/TextMark";
 import { useFlashMessage } from "@/hooks/useFlashMessage";
 import { usePage } from "@inertiajs/react";
-import { PropsWithChildren, ReactNode, useState } from "react";
+import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
 import { t } from "@/i18n";
 import { appRoutes } from "@/utils/routes";
+
+const NAV_MARK_CLASS = "h-5 w-5 text-[10px]";
+
+interface NavItemDescriptor {
+    href: string;
+    label: string;
+    routePattern: string;
+    icon: ReactNode;
+}
+
+const NAV_ITEM_DESCRIPTORS: readonly NavItemDescriptor[] = [
+    {
+        href: appRoutes.dashboard(),
+        label: t("nav.dashboard"),
+        routePattern: "dashboard",
+        icon: <TextMark label="D" className={NAV_MARK_CLASS} />,
+    },
+    {
+        href: appRoutes.subscription.index(),
+        label: t("nav.subscription"),
+        routePattern: "subscription.*",
+        icon: <TextMark label="S" className={NAV_MARK_CLASS} />,
+    },
+    {
+        href: appRoutes.plans.index(),
+        label: t("nav.plan"),
+        routePattern: "plans.*",
+        icon: <TextMark label="P" className={NAV_MARK_CLASS} />,
+    },
+    {
+        href: appRoutes.cards.create(),
+        label: t("nav.card"),
+        routePattern: "cards.*",
+        icon: <TextMark label="C" className={NAV_MARK_CLASS} />,
+    },
+];
 
 export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user!;
+    const page = usePage();
+    const user = page.props.auth.user;
+    if (!user) {
+        throw new Error(
+            "AuthenticatedLayout requires an authenticated user (auth.user is null).",
+        );
+    }
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const flashProps = useFlashMessage();
-    const navMarkClass = "h-5 w-5 text-[10px]";
 
-    const navItems = [
-        {
-            href: appRoutes.dashboard(),
-            label: t("nav.dashboard"),
-            active: route().current("dashboard"),
-            icon: <TextMark label="D" className={navMarkClass} />,
-        },
-        {
-            href: appRoutes.subscription.index(),
-            label: t("nav.subscription"),
-            active: route().current("subscription.*"),
-            icon: <TextMark label="S" className={navMarkClass} />,
-        },
-        {
-            href: appRoutes.plans.index(),
-            label: t("nav.plan"),
-            active: route().current("plans.*"),
-            icon: <TextMark label="P" className={navMarkClass} />,
-        },
-        {
-            href: appRoutes.cards.create(),
-            label: t("nav.card"),
-            active: route().current("cards.*"),
-            icon: <TextMark label="C" className={navMarkClass} />,
-        },
-    ];
+    // page.url を依存にして Inertia ナビゲーション時のみ active 計算をやり直す。
+    // route().current() は URL に依存する暗黙的な副作用関数のため、ESLint からは
+    // page.url 依存が "不要" に見えてしまうので明示的に抑制する。
+    const navItems = useMemo(
+        () =>
+            NAV_ITEM_DESCRIPTORS.map((item) => ({
+                ...item,
+                active: route().current(item.routePattern),
+            })),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [page.url],
+    );
 
     return (
         <div className="min-h-screen">

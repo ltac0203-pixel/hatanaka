@@ -2,7 +2,7 @@ import SubscriptionForm from "@/Pages/Plan/Partials/SubscriptionForm";
 import { t } from "@/i18n";
 import type { FincodeCard, Plan } from "@/types/subscription";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { postMock, setDataMock, useFormMock } = vi.hoisted(() => ({
@@ -25,18 +25,40 @@ vi.mock("@inertiajs/react", () => ({
             {children}
         </a>
     ),
+    // post() の呼び出し中だけ processing=true を返す可変モック。
+    // SubscriptionForm 側が独自 isSubmitting state を捨てて useForm.processing
+    // のみで disabled 制御するようになったため、テスト側もそれに追随する。
     useForm: (initialData: {
         fincode_plan_id: string;
         card_id: number;
         start_date: string;
     }) => {
         useFormMock(initialData);
+        const [processing, setProcessing] = useState(false);
+
+        const post = (
+            url: string,
+            options: {
+                onError?: (errors: Record<string, string | string[] | undefined>) => void;
+                onFinish?: () => void;
+            } = {},
+        ) => {
+            setProcessing(true);
+            const wrappedOptions = {
+                ...options,
+                onFinish: () => {
+                    setProcessing(false);
+                    options.onFinish?.();
+                },
+            };
+            postMock(url, wrappedOptions);
+        };
 
         return {
             data: initialData,
             setData: setDataMock,
-            post: postMock,
-            processing: false,
+            post,
+            processing,
             errors: {},
         };
     },
@@ -59,7 +81,7 @@ describe("SubscriptionForm", () => {
         interval_label: "月",
     };
 
-    const cards: FincodeCard[] = [
+    const cards: readonly [FincodeCard, ...FincodeCard[]] = [
         {
             id: 1,
             brand: "Visa",
