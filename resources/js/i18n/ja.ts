@@ -179,6 +179,12 @@ export const ja = {
             message: "本当にカードを削除しますか？",
             confirmLabel: "削除する",
         },
+        errors: {
+            cancelFailed:
+                "サブスクリプションの解約に失敗しました。時間をおいて再試行してください。",
+            cardDeleteFailed:
+                "カードの削除に失敗しました。時間をおいて再試行してください。",
+        },
     },
     card: {
         registerTitle: "カード登録",

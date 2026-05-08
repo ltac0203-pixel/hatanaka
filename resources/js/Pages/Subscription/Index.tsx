@@ -15,11 +15,6 @@ interface Props extends PageProps {
     cards: FincodeCard[];
 }
 
-const SUBSCRIPTION_CANCEL_ERROR =
-    "サブスクリプションの解約に失敗しました。時間をおいて再試行してください。";
-const CARD_DELETE_ERROR =
-    "カードの削除に失敗しました。時間をおいて再試行してください。";
-
 const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
         active: "bg-black text-white border-black",
@@ -124,8 +119,9 @@ export default function Index({ subscription, cards }: Props) {
                                                     appRoutes.subscription.destroy(
                                                         subscription.id,
                                                     ),
-                                                fallbackErrorMessage:
-                                                    SUBSCRIPTION_CANCEL_ERROR,
+                                                fallbackErrorMessage: t(
+                                                    "subscription.errors.cancelFailed",
+                                                ),
                                             })
                                         }
                                     >
@@ -207,8 +203,9 @@ export default function Index({ subscription, cards }: Props) {
                                                     appRoutes.cards.destroy(
                                                         card.id,
                                                     ),
-                                                fallbackErrorMessage:
-                                                    CARD_DELETE_ERROR,
+                                                fallbackErrorMessage: t(
+                                                    "subscription.errors.cardDeleteFailed",
+                                                ),
                                             })
                                         }
                                     >
