@@ -4,7 +4,11 @@ import ConfirmModal from "@/Components/ConfirmModal";
 import DangerButton from "@/Components/DangerButton";
 import TextMark from "@/Components/TextMark";
 import { Head } from "@inertiajs/react";
-import { FincodeCard, Subscription } from "@/types/subscription";
+import {
+    FincodeCard,
+    Subscription,
+    SubscriptionStatus,
+} from "@/types/subscription";
 import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { PageProps } from "@/types";
 import { t } from "@/i18n";
@@ -15,15 +19,15 @@ interface Props extends PageProps {
     cards: FincodeCard[];
 }
 
-const statusBadge = (status: string) => {
-    const styles: Record<string, string> = {
+const statusBadge = (status: SubscriptionStatus) => {
+    const styles: Record<SubscriptionStatus, string> = {
         active: "bg-black text-white border-black",
         canceled: "bg-gray-50 text-gray-600 border-gray-200",
         expired: "bg-gray-100 text-gray-500 border-gray-300",
         unpaid: "bg-red-50 text-red-700 border-red-200",
         incomplete: "bg-gray-100 text-gray-500 border-gray-300",
     };
-    const labels: Record<string, string> = {
+    const labels: Record<SubscriptionStatus, string> = {
         active: t("subscription.statusLabels.active"),
         canceled: t("subscription.statusLabels.canceled"),
         expired: t("subscription.statusLabels.expired"),
@@ -32,9 +36,9 @@ const statusBadge = (status: string) => {
     };
     return (
         <span
-            className={`inline-flex items-center border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${styles[status] || ""}`}
+            className={`inline-flex items-center border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${styles[status]}`}
         >
-            {labels[status] || status}
+            {labels[status]}
         </span>
     );
 };
