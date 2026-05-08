@@ -14,7 +14,7 @@ End-to-end setup for running the app locally. The README covers the short versio
 | MySQL | 8.0+ or MariaDB 10.6+ | Tests target MariaDB; either works for development. |
 | Fincode account | Test mode | See [fincode-setup.md](./fincode-setup.md). |
 
-Required PHP extensions are the Laravel 12 defaults: `mbstring`, `pdo_mysql`, `bcmath`, `intl`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `fileinfo`, `dom`, `curl`.
+Required PHP extensions are the Laravel 13 defaults: `mbstring`, `pdo_mysql`, `bcmath`, `intl`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `fileinfo`, `dom`, `curl`.
 
 ## 0. Recommended toolchain
 
@@ -35,6 +35,31 @@ volta install node@22.11.0
 Everything above is OSS / free.
 
 ## 1. Create the database
+
+You can run the database via **Docker (recommended)** or **install it directly on the host**. Pick one — the rest of the guide (`composer dev` and beyond) is identical either way.
+
+### Route A: Docker MySQL (recommended)
+
+The repository ships a `docker-compose.yml` that starts `mysql:8.0` (host port **3307**) and `mailpit` (SMTP `:1025` / UI `:8025`). Port 3307 is used so this stack does not collide with another MySQL already bound to 3306 on the host.
+
+```bash
+docker compose up -d
+```
+
+| Service | Host-side port | Default credentials |
+| --- | --- | --- |
+| MySQL (`hatanaka-db`) | `127.0.0.1:3307` | DB `hatanaka` / user `hatanaka` / password `hatanaka` (root password `root`) |
+| Mailpit (`hatanaka-mailpit`) | SMTP `127.0.0.1:1025` / UI `127.0.0.1:8025` | No auth (`MP_SMTP_AUTH_ACCEPT_ANY=1`) |
+
+Create the test database (its name is pinned to `hatanaka_testing` in `phpunit.xml`):
+
+```bash
+docker compose exec db mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS hatanaka_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON hatanaka_testing.* TO 'hatanaka'@'%';"
+```
+
+To wipe everything (including the named volume `hatanaka_db`), run `docker compose down -v`.
+
+### Route B: Direct host install (MySQL 8.0+ or MariaDB 10.6+)
 
 ```sql
 CREATE DATABASE subscription_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -74,12 +99,19 @@ Edit `.env`:
 APP_NAME="Subscription App"
 APP_URL=http://localhost:8000
 
+# --- DB (Route A: Docker) ---
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=subscription_app
-DB_USERNAME=app
-DB_PASSWORD=change-me
+DB_PORT=3307
+DB_DATABASE=hatanaka
+DB_USERNAME=hatanaka
+DB_PASSWORD=hatanaka
+
+# --- DB (Route B: direct host install — replace the 5 lines above with these) ---
+# DB_PORT=3306
+# DB_DATABASE=subscription_app
+# DB_USERNAME=app
+# DB_PASSWORD=change-me
 
 FINCODE_API_KEY=m_test_xxxxxxxxxxxxxxxxxxxxxxx
 FINCODE_PUBLIC_KEY=p_test_xxxxxxxxxxxxxxxxxxxxxxx
@@ -90,6 +122,8 @@ SESSION_DRIVER=database
 CACHE_STORE=database
 QUEUE_CONNECTION=database
 ```
+
+> Always run `php artisan config:clear` after editing `.env`.
 
 Get the Fincode keys from [fincode-setup.md](./fincode-setup.md).
 
@@ -132,7 +166,11 @@ This wipes the DB and re-runs seeders. Use it when iterating on schema or seeder
 
 The default `.env.example` sets `MAIL_MAILER=log`. Outgoing mail (registration, email verification) is appended to `storage/logs/laravel.log` and visible in the `pail` pane of `composer dev`.
 
-For a proper UI, install **Mailpit** (recommended):
+For a proper UI, use **Mailpit** (recommended).
+
+If you are on Route A (Docker), `hatanaka-mailpit` is already running thanks to `docker compose up -d` — no extra install needed; just switch the `MAIL_*` settings below.
+
+On Route B (direct host install), install Mailpit on the host:
 
 ```bash
 # macOS

@@ -218,7 +218,7 @@ class SubscriptionControllerTest extends TestCase
             ->with(
                 Mockery::on(fn ($u) => $u->id === $user->id),
                 $plan['fincode_plan_id'],
-                Mockery::on(fn ($c) => $c->id === $card->id),
+                $card->id,
                 now()->format('Y-m-d')
             )
             ->andReturn($mockSubscription);
@@ -238,6 +238,13 @@ class SubscriptionControllerTest extends TestCase
     {
         [$user, $plan, $card] = $this->createFullSetup();
         $this->createSubscription($user, $plan, $card);
+
+        $planService = Mockery::mock(PlanService::class);
+        $planService->shouldReceive('findActivePlanOrFail')
+            ->once()
+            ->with($plan['fincode_plan_id'])
+            ->andReturn($plan);
+        $this->app->instance(PlanService::class, $planService);
 
         $response = $this->actingAs($user)->post('/subscription', [
             'fincode_plan_id' => $plan['fincode_plan_id'],
@@ -315,6 +322,13 @@ class SubscriptionControllerTest extends TestCase
             'price_display' => '¥1,000/月',
             'interval_label' => '月',
         ];
+
+        $planService = Mockery::mock(PlanService::class);
+        $planService->shouldReceive('findActivePlanOrFail')
+            ->once()
+            ->with($plan['fincode_plan_id'])
+            ->andReturn($plan);
+        $this->app->instance(PlanService::class, $planService);
 
         $response = $this->actingAs($user)->post('/subscription', [
             'fincode_plan_id' => $plan['fincode_plan_id'],

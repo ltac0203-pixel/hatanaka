@@ -19,8 +19,8 @@ use Inertia\Response;
 class CardController extends Controller
 {
     public function __construct(
-        private CardManager $cardManager,
-        private FincodeConfigValidator $configValidator
+        private readonly CardManager $cardManager,
+        private readonly FincodeConfigValidator $configValidator,
     ) {}
 
     public function create(Request $request): Response

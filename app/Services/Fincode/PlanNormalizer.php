@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Fincode;
 
-class PlanNormalizer
+use App\Enums\PlanInterval;
+
+final class PlanNormalizer
 {
     public function extractPlans(array $response): array
     {
@@ -45,7 +47,7 @@ class PlanNormalizer
     public function normalizePlan(array $plan): array
     {
         $fincodePlanId = (string) ($plan['id'] ?? $plan['plan_id'] ?? $plan['fincode_plan_id'] ?? '');
-        $interval = $this->normalizeInterval((string) ($plan['interval'] ?? $plan['cycle'] ?? $plan['billing_cycle'] ?? 'monthly'));
+        $interval = PlanInterval::fromApi((string) ($plan['interval'] ?? $plan['cycle'] ?? $plan['billing_cycle'] ?? 'monthly'));
         $intervalCount = max((int) ($plan['interval_count'] ?? $plan['cycle_count'] ?? 1), 1);
         $amount = (int) ($plan['amount'] ?? $plan['price'] ?? $plan['unit_amount'] ?? 0);
         $status = $this->normalizeStatus((string) ($plan['status'] ?? 'active'));
@@ -60,25 +62,14 @@ class PlanNormalizer
             'name' => (string) ($plan['name'] ?? $plan['plan_name'] ?? ''),
             'description' => isset($plan['description']) ? (string) $plan['description'] : null,
             'amount' => $amount,
-            'interval' => $interval,
+            'interval' => $interval->value,
             'interval_count' => $intervalCount,
             'status' => $status,
             'features' => $features,
-            'price_display' => '¥'.number_format($amount).'/'.$this->intervalLabel($interval, $intervalCount),
-            'interval_label' => $this->intervalLabel($interval, $intervalCount),
+            'price_display' => $interval->priceDisplay($amount, $intervalCount),
+            'interval_label' => $interval->label($intervalCount),
             'metadata' => is_array($plan['metadata'] ?? null) ? $plan['metadata'] : null,
         ];
-    }
-
-    private function normalizeInterval(string $interval): string
-    {
-        return match (strtolower($interval)) {
-            'month', 'monthly' => 'monthly',
-            'year', 'yearly' => 'yearly',
-            'week', 'weekly' => 'weekly',
-            'day', 'daily' => 'daily',
-            default => 'monthly',
-        };
     }
 
     private function normalizeStatus(string $status): string
@@ -101,19 +92,5 @@ class PlanNormalizer
             fn ($feature): string => (string) $feature,
             $features
         ));
-    }
-
-    private function intervalLabel(string $interval, int $intervalCount): string
-    {
-        $labels = [
-            'monthly' => '月',
-            'yearly' => '年',
-            'weekly' => '週',
-            'daily' => '日',
-        ];
-
-        $label = $labels[$interval] ?? $interval;
-
-        return $intervalCount > 1 ? "{$intervalCount}{$label}" : $label;
     }
 }

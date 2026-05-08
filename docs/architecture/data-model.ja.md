@@ -62,8 +62,10 @@ erDiagram
         string fincode_card_id
         enum status "active|canceled|expired|unpaid|incomplete"
         date start_date
+        date stop_date "解約予約日"
         date next_charge_date
         timestamp canceled_at
+        timestamp ends_at "実際の終了日時"
         bigint active_user_id "virtual, UK"
         timestamp deleted_at "soft delete"
     }

@@ -24,8 +24,8 @@ class PlanService
     private const PLAN_NOT_FOUND_CACHE_TTL_SECONDS = 60;
 
     public function __construct(
-        private FincodeClient $client,
-        private PlanNormalizer $normalizer
+        private readonly FincodeClient $client,
+        private readonly PlanNormalizer $normalizer,
     ) {}
 
     /**

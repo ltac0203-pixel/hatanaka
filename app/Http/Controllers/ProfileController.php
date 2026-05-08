@@ -11,12 +11,15 @@ use App\Services\SubscriptionManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly SubscriptionManager $subscriptionManager,
+    ) {}
+
     public function edit(Request $request): Response
     {
         return Inertia::render('Profile/Edit');
@@ -30,28 +33,10 @@ class ProfileController extends Controller
         return redirect()->route('profile.edit');
     }
 
-    public function destroy(DeleteAccountRequest $request, SubscriptionManager $subscriptionManager): RedirectResponse
+    public function destroy(DeleteAccountRequest $request): RedirectResponse
     {
-        $authenticatedUser = $request->user();
-
         try {
-            DB::transaction(function () use ($authenticatedUser, $subscriptionManager): void {
-                $user = $authenticatedUser->newQuery()
-                    ->whereKey($authenticatedUser->getKey())
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                $user->subscriptions()
-                    ->active()
-                    ->without('card')
-                    ->lockForUpdate()
-                    ->get()
-                    ->each(function ($subscription) use ($subscriptionManager, $user): void {
-                        $subscriptionManager->cancel($subscription, $user);
-                    });
-
-                $user->delete();
-            });
+            $this->subscriptionManager->cancelAllForUserAndDelete($request->user());
         } catch (FincodeApiException) {
             return redirect()->route('profile.edit')
                 ->with('error', '退会処理に失敗しました。時間をおいて再試行してください。');

@@ -18,7 +18,7 @@ use Inertia\Response;
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private SubscriptionManager $subscriptionManager
+        private readonly SubscriptionManager $subscriptionManager,
     ) {}
 
     public function index(Request $request): Response
@@ -41,7 +41,7 @@ class SubscriptionController extends Controller
             $this->subscriptionManager->createForPlan(
                 $request->user(),
                 $validated['fincode_plan_id'],
-                $request->getValidatedCard(),
+                (int) $validated['card_id'],
                 $validated['start_date']
             );
         } catch (FincodeApiException) {

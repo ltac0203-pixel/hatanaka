@@ -115,7 +115,7 @@ sequenceDiagram
     SM->>DB: SELECT 既存アクティブ契約（active_user_id 一意制約）
     alt 既にアクティブ
         SM-->>L: throw ActiveSubscriptionExistsException
-        L-->>U: 409 Conflict
+        L-->>U: 422 Unprocessable Entity
     end
     SM->>PS: fetch(planId)
     PS->>FC: GET /v1/plans/{planId}

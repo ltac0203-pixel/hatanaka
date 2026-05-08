@@ -16,7 +16,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class CardController extends Controller
 {
     public function __construct(
-        private CardManager $cardManager
+        private readonly CardManager $cardManager,
     ) {}
 
     public function index(Request $request): AnonymousResourceCollection

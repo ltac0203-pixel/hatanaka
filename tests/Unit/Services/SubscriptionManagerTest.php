@@ -98,7 +98,7 @@ class SubscriptionManagerTest extends TestCase
 
     private function expectedCreateIdempotencyKey(User $user, array $planData, FincodeCard $card, string $startDate): string
     {
-        return 'subscription:create:'.hash('sha256', implode('|', [
+        return 'subscription.create:'.hash('sha256', implode('|', [
             (string) $user->id,
             $planData['fincode_plan_id'],
             $card->fincode_card_id,
@@ -108,7 +108,7 @@ class SubscriptionManagerTest extends TestCase
 
     private function expectedCancelIdempotencyKey(string $subscriptionId): string
     {
-        return 'subscription:cancel:'.hash('sha256', $subscriptionId);
+        return 'subscription.cancel:'.hash('sha256', $subscriptionId);
     }
 
     private function setRequestContext(string $ipAddress, string $userAgent): void

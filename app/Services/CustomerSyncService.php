@@ -10,19 +10,16 @@ use App\Models\FincodeCustomer;
 use App\Models\User;
 use App\Services\Fincode\CustomerService;
 use App\Services\Fincode\FincodeOperationLogger;
+use App\Services\Fincode\IdempotencyKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CustomerSyncService
 {
-    protected CustomerService $customerService;
-
     public function __construct(
-        CustomerService $customerService,
-        private RequestContextResolver $requestContextResolver
-    ) {
-        $this->customerService = $customerService;
-    }
+        private readonly CustomerService $customerService,
+        private readonly RequestContextResolver $requestContextResolver,
+    ) {}
 
     /**
      * 後続処理が必ず Fincode 顧客IDを使えるよう存在を保証する。
@@ -65,7 +62,7 @@ class CustomerSyncService
             $response = $this->customerService->create([
                 'name' => $user->name,
                 'email' => $user->email,
-            ]);
+            ], IdempotencyKey::for('customer.create', [$user->id]));
         } catch (FincodeApiException $e) {
             FincodeOperationLogger::rethrowWithLog('Failed to create customer on Fincode', [
                 'user_id' => $user->id,

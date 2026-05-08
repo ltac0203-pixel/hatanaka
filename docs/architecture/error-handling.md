@@ -52,7 +52,7 @@ Two families:
 
 | Exception | Raised by | Why |
 | --- | --- | --- |
-| `ActiveSubscriptionExistsException` | `SubscriptionManager.subscribe` | The user already has an active subscription. Returned to clients as 409 Conflict. The DB unique index on `active_user_id` is the second line of defense — see [data-model.md](./data-model.md). |
+| `ActiveSubscriptionExistsException` | `SubscriptionManager.subscribe` | The user already has an active subscription. Returned to clients as 422 Unprocessable Entity (validation-style payload keyed by `fincode_plan_id`). The DB unique index on `active_user_id` is the second line of defense — see [data-model.md](./data-model.md). |
 | `CardInUseException` | `CardManager.delete` | The card is referenced by an active subscription. Forces the user to cancel or change card first. |
 | `ExpiredCardException` | `CardManager.register`, `SubscriptionManager.subscribe` | Card expiration date is in the past. Surfaced before any Fincode call. |
 | `PlanUnavailableException` | `PlanService.fetch`, `SubscriptionManager.subscribe` | The requested plan does not exist on Fincode or is inactive. |

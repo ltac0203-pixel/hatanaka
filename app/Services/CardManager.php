@@ -13,32 +13,17 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\Fincode\CardService;
 use App\Services\Fincode\FincodeOperationLogger;
+use App\Services\Fincode\IdempotencyKey;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 class CardManager
 {
-    protected CardService $cardService;
-
-    /**
-     * カード登録前に顧客同期の前提を満たすために利用する。
-     */
-    protected CustomerSyncService $customerSyncService;
-
-    /**
-     * 現在のリクエスト由来コンテキストを監査イベントへ固定する。
-     */
-    protected RequestContextResolver $requestContextResolver;
-
     public function __construct(
-        CardService $cardService,
-        CustomerSyncService $customerSyncService,
-        RequestContextResolver $requestContextResolver
-    ) {
-        $this->cardService = $cardService;
-        $this->customerSyncService = $customerSyncService;
-        $this->requestContextResolver = $requestContextResolver;
-    }
+        private readonly CardService $cardService,
+        private readonly CustomerSyncService $customerSyncService,
+        private readonly RequestContextResolver $requestContextResolver,
+    ) {}
 
     public function create(User $user, string $token, bool $isDefault = false): FincodeCard
     {
@@ -66,7 +51,8 @@ class CardManager
                 $response = $this->cardService->create(
                     $customer->fincode_customer_id,
                     $token,
-                    $isDefault
+                    $isDefault,
+                    IdempotencyKey::for('card.create', [$user->id, $token])
                 );
             } catch (FincodeApiException $e) {
                 FincodeOperationLogger::rethrowWithLog('Failed to create card on Fincode', [
@@ -151,7 +137,8 @@ class CardManager
             try {
                 $this->cardService->deleteCard(
                     $card->fincode_customer_id,
-                    $card->fincode_card_id
+                    $card->fincode_card_id,
+                    IdempotencyKey::for('card.delete', [$card->user_id, $card->fincode_card_id])
                 );
             } catch (FincodeApiException $e) {
                 FincodeOperationLogger::rethrowWithLog('Failed to delete card on Fincode', [

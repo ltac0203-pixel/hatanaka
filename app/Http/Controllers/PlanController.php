@@ -14,7 +14,7 @@ use Inertia\Response;
 class PlanController extends Controller
 {
     public function __construct(
-        private PlanService $planService
+        private readonly PlanService $planService,
     ) {}
 
     public function index(Request $request): Response
