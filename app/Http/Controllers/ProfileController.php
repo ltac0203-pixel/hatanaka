@@ -27,7 +27,10 @@ class ProfileController extends Controller
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        // current_password は本人確認専用なので User の永続化対象には含めない。
+        // (User::$fillable に存在しないため、preventSilentlyDiscardingAttributes が
+        // dev/test で例外を出す前に safe() で絞り込む)
+        $request->user()->fill($request->safe()->only(['name', 'email']));
         $request->user()->save();
 
         return redirect()->route('profile.edit');

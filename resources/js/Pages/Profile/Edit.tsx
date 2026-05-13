@@ -14,14 +14,24 @@ import { t } from "@/i18n";
 interface Props extends PageProps {}
 
 export default function Edit({ auth }: Props) {
+    const currentEmail = auth.user?.email ?? "";
     const profileForm = useForm({
         name: auth.user?.name ?? "",
-        email: auth.user?.email ?? "",
+        email: currentEmail,
+        current_password: "",
     });
+
+    // email を実際に変更したときだけ本人確認パスワードを要求する。
+    // 同じ値の保存 (name だけ変える場合) に余計な摩擦を入れたくない。
+    const emailChanging = profileForm.data.email !== currentEmail;
 
     const submitProfile: FormEventHandler = (e) => {
         e.preventDefault();
-        profileForm.patch(route("profile.update"));
+        profileForm.patch(route("profile.update"), {
+            preserveScroll: true,
+            onSuccess: () => profileForm.reset("current_password"),
+            onFinish: () => profileForm.reset("current_password"),
+        });
     };
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -110,6 +120,42 @@ export default function Edit({ auth }: Props) {
                                 message={profileForm.errors.email}
                             />
                         </div>
+
+                        {emailChanging && (
+                            <div>
+                                <InputLabel
+                                    htmlFor="current_password"
+                                    value={t(
+                                        "profile.updateProfileInformation.currentPasswordLabel",
+                                    )}
+                                />
+                                <TextInput
+                                    id="current_password"
+                                    type="password"
+                                    className="mt-1 block w-full"
+                                    value={profileForm.data.current_password}
+                                    onChange={(e) =>
+                                        profileForm.setData(
+                                            "current_password",
+                                            e.target.value,
+                                        )
+                                    }
+                                    autoComplete="current-password"
+                                    required
+                                />
+                                <p className="mt-1 text-sm text-gray-600">
+                                    {t(
+                                        "profile.updateProfileInformation.currentPasswordHint",
+                                    )}
+                                </p>
+                                <InputError
+                                    className="mt-2"
+                                    message={
+                                        profileForm.errors.current_password
+                                    }
+                                />
+                            </div>
+                        )}
 
                         <div className="flex items-center gap-4">
                             <PrimaryButton disabled={profileForm.processing}>
