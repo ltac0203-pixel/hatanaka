@@ -15,11 +15,14 @@ Route::get('/', function (Request $request) {
         : redirect()->route('login');
 })->name('home');
 
+// メール検証済みのユーザーだけが本サービスのコア機能 (契約・カード・ダッシュボード) を
+// 利用できるように 'verified' ミドルウェアで保護する。/verify-email や /profile は
+// 認証だけで通す (routes/auth.php 側の 'auth' グループ)。
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth'])->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // 契約候補を比較して選べるよう、プラン参照系の導線をまとめる。
     Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
     Route::get('/plans/{fincode_plan_id}', [PlanController::class, 'show'])
