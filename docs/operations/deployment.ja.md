@@ -22,7 +22,7 @@
 | `QUEUE_CONNECTION=database`（または `redis`） | ✅ | ワーカー常駐が必須（後述） |
 | `MAIL_MAILER` | ✅ | 実ドライバを設定（`smtp`・`ses`・`postmark` 等）。`log` 不可 |
 | `LOG_CHANNEL=stack` | 推奨 | 既定 `stack` は `storage/logs/laravel.log` と stderr に出力 |
-| `TRUSTED_PROXIES` | LB 経由なら必須 | 設定しないと CSRF やレート制限が LB の IP で集計される |
+| `TRUSTED_PROXIES` | ✅ LB 経由なら必須 | 既定は「プロキシを信頼しない」(`X-Forwarded-*` のスプーフィングで `$request->ip()` を任意値にされる攻撃を防ぐため)。TLS 終端が前段にある場合は LB/CDN の CIDR (例: `10.0.0.0/8`) を必ず設定する。未設定だと HSTS / secure cookie が発火せず、IP ベースの throttle / 監査ログも機能しない |
 | HTTPS | ✅ | Cookie が Secure。混在コンテンツで Inertia が壊れる |
 
 > **起動時に検証される**：`app/Services/Fincode/FincodeApiConfigValidator.php`・`FincodeConfigValidator.php` が Fincode 設定の欠落・不整合を検知して例外を投げる。これらをバイパスしないこと。
