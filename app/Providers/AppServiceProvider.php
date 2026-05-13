@@ -11,6 +11,7 @@ use App\Services\Fincode\FincodeApiConfigValidator;
 use App\Services\Fincode\FincodeClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -95,11 +96,27 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // ログインはアカウント単位 (email) と IP を複合鍵にし、辞書攻撃と分散攻撃の両方を抑止する。
+        // Web の LoginRequest::throttleKey() と同じく Str::transliterate(Str::lower(...)) で正規化し、
+        // 経路間でキーが分裂して同一アカウントへの試行回数が二重計上になる/上限が緩むのを防ぐ。
+        // Limit 超過時に Lockout イベントを発火し、AuditEventListener が監査ログに残せるようにする。
         RateLimiter::for('api-login', function (Request $request) {
-            $email = Str::lower((string) $request->input('email'));
+            $email = Str::transliterate(Str::lower((string) $request->input('email')));
+            $perAccountKey = $email.'|'.$request->ip();
 
             return [
-                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinute(5)
+                    ->by($perAccountKey)
+                    ->response(function (Request $request, array $headers) use ($perAccountKey) {
+                        event(new Lockout($request));
+                        $seconds = RateLimiter::availableIn($perAccountKey);
+
+                        return response()->json([
+                            'message' => trans('auth.throttle', [
+                                'seconds' => $seconds,
+                                'minutes' => (int) ceil($seconds / 60),
+                            ]),
+                        ], 429, $headers);
+                    }),
                 Limit::perMinute(20)->by($request->ip()),
             ];
         });
