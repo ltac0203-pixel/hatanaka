@@ -5,8 +5,8 @@ import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import TextMark from "@/Components/TextMark";
 import { useFlashMessage } from "@/hooks/useFlashMessage";
-import { usePage } from "@inertiajs/react";
-import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
+import { router, usePage } from "@inertiajs/react";
+import { PropsWithChildren, ReactNode, useEffect, useMemo, useState } from "react";
 import { t } from "@/i18n";
 import { appRoutes } from "@/utils/routes";
 
@@ -52,11 +52,15 @@ export default function Authenticated({
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const page = usePage();
     const user = page.props.auth.user;
-    if (!user) {
-        throw new Error(
-            "AuthenticatedLayout requires an authenticated user (auth.user is null).",
-        );
-    }
+
+    // セッション失効や guest 状態でこの Layout が呼ばれたら ErrorBoundary を踏ませず、
+    // 静かにログイン画面へ誘導する。auth ミドルウェアと多重防御の関係。
+    useEffect(() => {
+        if (!user) {
+            router.visit(appRoutes.auth.login(), { replace: true });
+        }
+    }, [user]);
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const flashProps = useFlashMessage();
 
@@ -72,6 +76,10 @@ export default function Authenticated({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [page.url],
     );
+
+    if (!user) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen">

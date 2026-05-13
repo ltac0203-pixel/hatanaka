@@ -25,6 +25,7 @@ export const appRoutes = {
             }),
     },
     auth: {
+        login: () => route("login"),
         logout: () => route("logout"),
     },
 } as const;
