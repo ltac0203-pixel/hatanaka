@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -63,7 +64,22 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Subscription::class, SubscriptionPolicy::class);
         Gate::policy(FincodeCard::class, CardPolicy::class);
 
+        $this->configurePasswordDefaults();
         $this->configureRateLimiters();
+    }
+
+    /**
+     * 本番では 12 文字以上、英大小文字・数字を必須にし、haveibeenpwned で漏洩済みの
+     * パスワードを拒否する。開発・テストでは min(8) のみに緩めて開発時の負担と
+     * 外部 API への意図しないアクセス (uncompromised) を避ける。
+     */
+    private function configurePasswordDefaults(): void
+    {
+        Password::defaults(function () {
+            return app()->isProduction()
+                ? Password::min(12)->mixedCase()->numbers()->uncompromised()
+                : Password::min(8);
+        });
     }
 
     private function configureRateLimiters(): void
