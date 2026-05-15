@@ -31,22 +31,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // ALB/Cloudflare/Nginx 等の TLS 終端越しでも isSecure() を正しく判定し、
         // HSTS をはじめとするセキュリティ機能が稼働するよう X-Forwarded-* を信頼する。
-        // 信頼するプロキシは TRUSTED_PROXIES (.env) で明示する必要がある (例: '10.0.0.0/8'、複数は ',' 区切り)。
-        // 未設定時はプロキシを信頼しない (= X-Forwarded-* を無視する) のがセキュアデフォルト。
-        // '*' は同一 VPC 内などプロキシ経路が制御されている前提でのみ許容する。
-        // 直アクセス可能な環境で '*' にすると、攻撃者が X-Forwarded-For を偽装して
-        // IP ベースのレート制限を回避できる脆弱性になるため明示設定を必須とする。
+        // 既定は「プロキシを信頼しない」(= 空配列) とし、X-Forwarded-* スプーフィングで
+        // $request->ip() を任意値にされて IP ベースの throttle / 監査が無効化されることを防ぐ。
+        // LB/CDN 配下で本アプリを運用する場合は TRUSTED_PROXIES (.env) に CIDR を明示する
+        // (例: '10.0.0.0/8'、複数なら ',' 区切り、すべて信頼するなら '*')。
+        // '*' はプロキシ経路が完全に制御されている環境でのみ使うこと。
         $trustedProxies = env('TRUSTED_PROXIES');
-        if ($trustedProxies !== null) {
-            $middleware->trustProxies(
-                at: $trustedProxies,
-                headers: Request::HEADER_X_FORWARDED_FOR
-                    | Request::HEADER_X_FORWARDED_HOST
-                    | Request::HEADER_X_FORWARDED_PORT
-                    | Request::HEADER_X_FORWARDED_PROTO
-                    | Request::HEADER_X_FORWARDED_AWS_ELB,
-            );
-        }
+        $middleware->trustProxies(
+            at: match (true) {
+                $trustedProxies === null || $trustedProxies === '' => [],
+                $trustedProxies === '*' => '*',
+                default => array_values(array_filter(array_map('trim', explode(',', (string) $trustedProxies)))),
+            },
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
 
         $middleware->append(SecurityHeaders::class);
 

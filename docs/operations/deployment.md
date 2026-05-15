@@ -22,7 +22,7 @@ Production deployment guide. The template targets a typical PHP-on-Linux setup (
 | `QUEUE_CONNECTION=database` (or `redis`) | ✅ | A worker must be running — see "Queue worker" below. |
 | `MAIL_MAILER` | ✅ | Set to a real driver (`smtp`, `ses`, `postmark`, …). Not `log`. |
 | `LOG_CHANNEL=stack` | recommended | The default `stack` driver writes to `storage/logs/laravel.log` and stderr. |
-| `TRUSTED_PROXIES` | if behind a load balancer | Otherwise CSRF and rate limiting may key on the LB IP. |
+| `TRUSTED_PROXIES` | ✅ if behind a load balancer | Defaults to "trust no proxy" to block `X-Forwarded-*` spoofing of `$request->ip()`. Set to the LB/CDN CIDR (e.g. `10.0.0.0/8`) when terminating TLS in front; without it, HSTS won't fire, secure cookies won't be flagged, and IP-keyed throttle/audit loses its meaning. |
 | HTTPS | ✅ | Cookies are flagged Secure; mixed content breaks Inertia. |
 
 > **Validate at boot.** `app/Services/Fincode/FincodeApiConfigValidator.php` and `FincodeConfigValidator.php` raise on missing / inconsistent Fincode config. Don't bypass them.
