@@ -11,11 +11,9 @@ use App\Services\Fincode\FincodeApiConfigValidator;
 use App\Services\Fincode\FincodeClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -65,26 +63,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(FincodeCard::class, CardPolicy::class);
 
         $this->configureRateLimiters();
-        $this->configureAuthMail();
-    }
-
-    private function configureAuthMail(): void
-    {
-        ResetPassword::toMailUsing(function (object $notifiable, string $token): MailMessage {
-            $url = url(route('password.reset', [
-                'token' => $token,
-                'email' => $notifiable->getEmailForPasswordReset(),
-            ], false));
-
-            return (new MailMessage)
-                ->subject('パスワード再設定のご案内')
-                ->greeting('こんにちは')
-                ->line('パスワード再設定のリクエストを受け付けました。')
-                ->action('パスワードを再設定する', $url)
-                ->line('リンクの有効期限は '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' 分です。')
-                ->line('心当たりがない場合は、このメールを破棄してください。')
-                ->salutation('hatanaka');
-        });
     }
 
     private function configureRateLimiters(): void
