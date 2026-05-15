@@ -7,23 +7,23 @@ services:
     ports:
       - "3307:3306"
     environment:
-      MYSQL_DATABASE: hatanaka
-      MYSQL_USER: hatanaka
-      MYSQL_PASSWORD: hatanaka
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hatanaka}
+      MYSQL_USER: ${MYSQL_USER:-hatanaka}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hatanaka}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     volumes:
       - hatanaka_db:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 5s
       timeout: 5s
       retries: 20
 
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.21
     container_name: hatanaka-mailpit
     restart: unless-stopped
     ports:
