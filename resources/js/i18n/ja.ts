@@ -55,6 +55,9 @@ export const ja = {
                 "確認メールを再送信するには、ここをクリックしてください。",
             verificationSent:
                 "新しい確認リンクをメールアドレスに送信しました。",
+            currentPasswordLabel: "現在のパスワード",
+            currentPasswordHint:
+                "メールアドレスを変更するため、本人確認として現在のパスワードを入力してください。",
             saveButton: "保存",
             saved: "保存しました。",
         },
